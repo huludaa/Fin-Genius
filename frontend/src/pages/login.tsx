@@ -1,0 +1,133 @@
+import React, { useState } from 'react';
+import { Form, Input, Button, Card, Typography, message } from 'antd';
+import { UserOutlined, LockOutlined, RocketOutlined } from '@ant-design/icons';
+import { useRouter } from 'next/router';
+import { useAppDispatch } from '@/store/hooks';
+import { loginUser } from '@/store/slices/authSlice';
+import Link from 'next/link';
+
+const { Title, Text } = Typography;
+
+const Login = () => {
+    const [loading, setLoading] = useState(false);
+    const router = useRouter();
+    const dispatch = useAppDispatch();
+
+    const onFinish = async (values: any) => {
+        setLoading(true);
+        try {
+            // antd loginUser thunk returns the payload on success or rejects
+            const resultAction = await dispatch(loginUser(values));
+            if (loginUser.fulfilled.match(resultAction)) {
+                message.success('登录成功，欢迎回来！');
+                router.push('/chat');
+            } else {
+                const error: any = resultAction.payload;
+                message.error(error?.detail || '登录失败，请检查用户名或密码');
+            }
+        } catch (error) {
+            message.error('网络错误，请稍后再试');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div style={{
+            height: '100vh',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+            padding: '20px'
+        }}>
+            <Card
+                style={{
+                    width: '100%',
+                    maxWidth: '420px',
+                    borderRadius: '24px',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.08)',
+                    border: 'none',
+                    overflow: 'hidden'
+                }}
+                bodyStyle={{ padding: '40px' }}
+            >
+                <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                    <Title level={2} style={{ margin: 0, fontWeight: 700, color: '#1e293b' }}>Fin-Genius</Title>
+                    <Text type="secondary" style={{ fontSize: '15px' }}>金融营销智能系统</Text>
+                </div>
+
+                <Form
+                    name="login"
+                    layout="vertical"
+                    initialValues={{ remember: true }}
+                    onFinish={onFinish}
+                    size="large"
+                >
+                    <Form.Item
+                        name="username"
+                        rules={[{ required: true, message: '请输入用户名' }]}
+                    >
+                        <Input
+                            prefix={<UserOutlined style={{ color: '#94a3b8' }} />}
+                            placeholder="用户名"
+                            style={{ borderRadius: '12px', height: '50px' }}
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="password"
+                        rules={[{ required: true, message: '请输入密码' }]}
+                    >
+                        <Input.Password
+                            prefix={<LockOutlined style={{ color: '#94a3b8' }} />}
+                            placeholder="密码"
+                            style={{ borderRadius: '12px', height: '50px' }}
+                        />
+                    </Form.Item>
+
+                    <Form.Item style={{ marginTop: '40px' }}>
+                        <Button
+                            type="primary"
+                            htmlType="submit"
+                            loading={loading}
+                            block
+                            style={{
+                                height: '50px',
+                                borderRadius: '12px',
+                                fontSize: '16px',
+                                fontWeight: 600,
+                                background: '#2563EB',
+                                border: 'none',
+                                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
+                            }}
+                        >
+                            登录
+                        </Button>
+                    </Form.Item>
+                </Form>
+
+                <div style={{ textAlign: 'center', marginTop: '24px' }}>
+                    <Text type="secondary">还没有账号？</Text>
+                    <Link href="/register" style={{ marginLeft: '8px', color: '#2563EB', fontWeight: 600 }}>
+                        立即注册
+                    </Link>
+                </div>
+            </Card>
+
+            <style>{`
+                .ant-btn-primary:hover {
+                    background: #1d4ed8 !important;
+                    transform: translateY(-1px);
+                    transition: all 0.2s;
+                }
+                .ant-input:focus, .ant-input-focused {
+                    border-color: #2563EB !important;
+                    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1) !important;
+                }
+            `}</style>
+        </div>
+    );
+};
+
+export default Login;
