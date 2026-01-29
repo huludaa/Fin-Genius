@@ -6,7 +6,11 @@ import ChatInput from "@/components/chat/ChatInput";
 import Message from "@/components/chat/Message";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { clearMessages, addMessage } from "@/store/slices/chatSlice";
-import { fetchConversationMessages } from "@/store/slices/conversationSlice";
+import {
+  fetchConversationMessages,
+  setCurrentConversationId,
+  clearCurrentMessages
+} from "@/store/slices/conversationSlice";
 import {
   Spin,
   Alert,
@@ -41,27 +45,37 @@ const Chat = () => {
   useEffect(() => {
     if (!router.isReady) return;
     const queryId = router.query.id as string;
+    const parsedQueryId = queryId ? parseInt(queryId) : null;
 
-    // 当对话 ID 发生变化时（包括切换对话或进入新对话）
+    // 当对话 ID 发生变化时
     if (queryId !== prevQueryId.current) {
-      // 只要是不同的 ID，就重置当前聊天状态
-      dispatch(clearMessages());
-      // 重置模板配置及其表单数据
-      setActiveTemplate(null);
-      setTemplateVariables({});
+      // 优化：识别是否是刚从“新对话”发送消息产生的跳转
+      const isJustCreated = !prevQueryId.current && parsedQueryId === currentConversationId && messages.length > 0;
+
+      if (!isJustCreated) {
+        // 重要：立即清空本地显示的消息和 Store 中存储的数据库消息，防止看到上一个对话的内容
+        dispatch(clearMessages());
+        dispatch(setCurrentConversationId(parsedQueryId));
+        // 这里需要一个 clearCurrentMessages 的 action，确保数据库缓存也清空
+        dispatch(clearCurrentMessages());
+
+        setActiveTemplate(null);
+        setTemplateVariables({});
+      }
 
       prevQueryId.current = queryId;
 
-      // 如果有具体的对话 ID，则从数据库加载消息
-      if (queryId && status === "idle") {
-        dispatch(fetchConversationMessages(parseInt(queryId)));
+      // 如果有具体的对话 ID 且不是刚创建的，则立即加载后端消息
+      if (parsedQueryId && !isJustCreated) {
+        dispatch(fetchConversationMessages(parsedQueryId));
       }
     }
   }, [
     router.query.id,
     router.isReady,
     dispatch,
-    status,
+    currentConversationId,
+    messages.length
   ]);
 
   // 2. 将数据库加载的消息同步到本地聊天状态
@@ -79,8 +93,9 @@ const Chat = () => {
       const localCount = messages.filter((m) => m.type === "text").length;
       const dbCount = currentMessages.length;
 
-      // 如果本地消息与数据库不一致，重新载入
-      if (dbCount > 0 && (localCount === 0 || localCount !== dbCount)) {
+      // 优化：仅在本地消息为空时（通常是刚进入页面或切换对话后）才从数据库同步
+      // 避免在对话过程中因数据库保存延迟导致的界面闪烁
+      if (dbCount > 0 && localCount === 0) {
         dispatch(clearMessages());
 
         currentMessages.forEach((msg) => {
