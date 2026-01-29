@@ -10,6 +10,7 @@ class Conversation(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     title = Column(String(255), default="New Chat")
     is_starred = Column(Boolean, default=False)
+    starred_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
@@ -25,6 +26,7 @@ class ConversationMessage(Base):
     role = Column(String(50))  # 'user' or 'assistant'
     content = Column(Text)
     is_starred = Column(Boolean, default=False)
+    starred_at = Column(DateTime(timezone=True), nullable=True)
     compliance_result = Column(Text, nullable=True) # Stored as JSON string
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     

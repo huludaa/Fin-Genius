@@ -8,6 +8,8 @@ const { Option } = Select;
 export interface Variable {
     name: string;
     label: string;
+    description?: string;
+    required?: boolean;
     type: 'text' | 'select' | 'multi-select';
     options?: { value: string; description?: string }[];
 }
@@ -39,11 +41,11 @@ const VariableDefinition: React.FC<VariableDefinitionProps> = ({ variables, onCh
         onChange(newVars);
     };
 
-    const updateOption = (varIndex: number, optIndex: number, value: string) => {
+    const updateOption = (varIndex: number, optIndex: number, updates: Partial<{ value: string; description: string }>) => {
         const newVars = [...variables];
         const v = { ...newVars[varIndex] };
         const newOpts = [...(v.options || [])];
-        newOpts[optIndex] = { ...newOpts[optIndex], value };
+        newOpts[optIndex] = { ...newOpts[optIndex], ...updates };
         v.options = newOpts;
         newVars[varIndex] = v;
         onChange(newVars);
@@ -84,7 +86,7 @@ const VariableDefinition: React.FC<VariableDefinitionProps> = ({ variables, onCh
                             <Input
                                 placeholder="e.g. product_name"
                                 value={variable.name}
-                                status={variable.name && !/^[a-zA-Z0-0_]+$/.test(variable.name) ? 'error' : ''}
+                                status={variable.name && !/^[a-zA-Z0-9_]+$/.test(variable.name) ? 'error' : ''}
                                 onChange={e => {
                                     const val = e.target.value.replace(/[^a-zA-Z0-9_]/g, '');
                                     updateVariable(varIdx, { name: val });
@@ -120,28 +122,70 @@ const VariableDefinition: React.FC<VariableDefinitionProps> = ({ variables, onCh
                         </Col>
                     </Row>
 
+                    <Row gutter={16} style={{ marginTop: 12 }}>
+                        <Col span={18}>
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                                变量描述 (可选)
+                            </Text>
+                            <Input
+                                placeholder="说明此变量的作用"
+                                value={variable.description}
+                                onChange={e => updateVariable(varIdx, { description: e.target.value })}
+                                disabled={readOnly}
+                            />
+                        </Col>
+                        <Col span={6}>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <Text type="secondary" style={{ fontSize: '12px', marginBottom: 4 }}>
+                                    是否必填
+                                </Text>
+                                <Select
+                                    value={variable.required ? 'yes' : 'no'}
+                                    onChange={val => updateVariable(varIdx, { required: val === 'yes' })}
+                                    disabled={readOnly}
+                                    style={{ width: '100%' }}
+                                >
+                                    <Option value="yes">必填</Option>
+                                    <Option value="no">选填</Option>
+                                </Select>
+                            </div>
+                        </Col>
+                    </Row>
+
                     {(variable.type === 'select' || variable.type === 'multi-select') && (
                         <div style={{ marginTop: 16, padding: '12px', background: '#f8f9fa', borderRadius: '8px' }}>
                             <Text strong style={{ fontSize: '13px', display: 'block', marginBottom: 8 }}>
                                 可选项配置 <span style={{ color: '#ff4d4f', fontWeight: 'normal', fontSize: '12px' }}>*</span>
                             </Text>
                             {variable.options?.map((opt, optIdx) => (
-                                <Space key={optIdx} style={{ display: 'flex', marginBottom: 8 }}>
-                                    <Input
-                                        placeholder="选项值"
-                                        value={opt.value}
-                                        onChange={e => updateOption(varIdx, optIdx, e.target.value)}
-                                        disabled={readOnly}
-                                    />
-                                    {!readOnly && (
-                                        <Button
-                                            type="text"
-                                            danger
-                                            icon={<DeleteOutlined />}
-                                            onClick={() => removeOption(varIdx, optIdx)}
+                                <Row key={optIdx} gutter={8} style={{ marginBottom: 8, alignItems: 'center' }}>
+                                    <Col span={8}>
+                                        <Input
+                                            placeholder="选项值"
+                                            value={opt.value}
+                                            onChange={e => updateOption(varIdx, optIdx, { value: e.target.value })}
+                                            disabled={readOnly}
                                         />
+                                    </Col>
+                                    <Col span={14}>
+                                        <Input
+                                            placeholder="选项描述 (可选)"
+                                            value={opt.description}
+                                            onChange={e => updateOption(varIdx, optIdx, { description: e.target.value })}
+                                            disabled={readOnly}
+                                        />
+                                    </Col>
+                                    {!readOnly && (
+                                        <Col span={2}>
+                                            <Button
+                                                type="text"
+                                                danger
+                                                icon={<DeleteOutlined />}
+                                                onClick={() => removeOption(varIdx, optIdx)}
+                                            />
+                                        </Col>
                                     )}
-                                </Space>
+                                </Row>
                             ))}
                             {!readOnly && (
                                 <Button

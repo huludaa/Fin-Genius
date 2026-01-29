@@ -63,13 +63,10 @@ const Message: React.FC<MessageProps> = ({ id, role, content, isStarred, complia
                 alignItems: isUser ? 'flex-end' : 'flex-start',
                 gap: '8px'
             }}>
-                <div className={`message-bubble ${type === 'loading' ? 'loading' : ''}`} style={{
+                <div className={`message-bubble ${isUser ? 'user' : 'assistant'} ${type === 'loading' ? 'loading' : ''}`} style={{
                     padding: '12px 18px',
                     borderRadius: isUser ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-                    background: isUser ? '#2563EB' : '#f8fafc',
-                    color: isUser ? '#fff' : '#1e293b',
                     boxShadow: '0 2px 12px rgba(0,0,0,0.03)',
-                    border: isUser ? 'none' : '1px solid #eef1f4',
                     lineHeight: '1.6',
                     fontSize: '15px',
                     position: 'relative'
@@ -137,17 +134,34 @@ const Message: React.FC<MessageProps> = ({ id, role, content, isStarred, complia
                     transition: all 0.3s ease;
                 }
                 
+                .message-bubble.user {
+                    background: #2563EB;
+                    color: #fff;
+                    border: none;
+                }
+                
+                .message-bubble.assistant {
+                    background: #f8fafc;
+                    color: #1e293b;
+                    border: 1px solid #eef1f4;
+                }
+                
                 :target .message-bubble, .message-bubble.highlight {
                     animation: bubbleHighlight 2.5s ease-out;
-                    box-shadow: 0 0 20px rgba(250, 219, 20, 0.6);
+                    box-shadow: 0 0 20px rgba(250, 219, 20, 0.6) !important;
                     border-color: #fadb14 !important;
+                    z-index: 10;
                 }
 
                 @keyframes bubbleHighlight {
                     0% { transform: scale(1); }
-                    10% { transform: scale(1.02); background-color: #fffbe6 !important; border-color: #fadb14 !important; }
+                    15% { 
+                        transform: scale(1.05); 
+                        border-color: #fadb14;
+                    }
                     100% { transform: scale(1); }
                 }
+                /* ... dot-pulse styles ... */
 
                 .dot-pulse {
                     width: 8px;

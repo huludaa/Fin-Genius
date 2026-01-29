@@ -37,21 +37,22 @@ const Chat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevQueryId = useRef<string | null>(null);
 
-  // 1. Monitor URL changes to load conversations
+  // 1. 监听 URL 变化以加载对话记录
   useEffect(() => {
     if (!router.isReady) return;
     const queryId = router.query.id as string;
-    const normalizedQueryId = queryId ? parseInt(queryId) : null;
-    if (queryId !== prevQueryId.current) {
-      const wasNewChat =
-        prevQueryId.current === null || prevQueryId.current === undefined;
-      const isSwitchingToDifferentChat =
-        !!normalizedQueryId && normalizedQueryId !== currentConversationId;
 
-      if (isSwitchingToDifferentChat || (!wasNewChat && !normalizedQueryId)) {
-        dispatch(clearMessages());
-      }
+    // 当对话 ID 发生变化时（包括切换对话或进入新对话）
+    if (queryId !== prevQueryId.current) {
+      // 只要是不同的 ID，就重置当前聊天状态
+      dispatch(clearMessages());
+      // 重置模板配置及其表单数据
+      setActiveTemplate(null);
+      setTemplateVariables({});
+
       prevQueryId.current = queryId;
+
+      // 如果有具体的对话 ID，则从数据库加载消息
       if (queryId && status === "idle") {
         dispatch(fetchConversationMessages(parseInt(queryId)));
       }
@@ -61,15 +62,15 @@ const Chat = () => {
     router.isReady,
     dispatch,
     status,
-    currentConversationId,
   ]);
 
-  // 2. Sync from database to local chat state
+  // 2. 将数据库加载的消息同步到本地聊天状态
 
   useEffect(() => {
     const queryId = router.query.id as string;
     const normalizedQueryId = queryId ? parseInt(queryId) : null;
 
+    // 当数据库消息加载完成，且当前 URL ID 与加载的 ID 匹配时
     if (
       status === "idle" &&
       currentConversationId === normalizedQueryId &&
@@ -77,6 +78,8 @@ const Chat = () => {
     ) {
       const localCount = messages.filter((m) => m.type === "text").length;
       const dbCount = currentMessages.length;
+
+      // 如果本地消息与数据库不一致，重新载入
       if (dbCount > 0 && (localCount === 0 || localCount !== dbCount)) {
         dispatch(clearMessages());
 
@@ -104,17 +107,20 @@ const Chat = () => {
     error,
   ]);
 
+  // 处理认证错误，清除 token 并跳转登录
   const handleAuthError = () => {
     dispatch(logout());
     router.push("/login");
   };
 
+  // 平滑滚动至聊天底部
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const lastMessageLength = useRef(messages.length);
   useEffect(() => {
+    // 当消息数量增加或正在生成（流式传输）时，自动滚动底部
     if (
       messages.length !== lastMessageLength.current ||
       status === "streaming"
@@ -124,17 +130,20 @@ const Chat = () => {
     }
   }, [messages.length, status]);
 
+  // 处理从收藏夹跳转过来时的消息定位和高亮
   useEffect(() => {
     const hash = window.location.hash;
     if (hash && hash.startsWith("#msg-")) {
       const timer = setTimeout(() => {
         const element = document.getElementById(hash.substring(1));
         if (element) {
+          // 平滑滚动到屏幕中央
           element.scrollIntoView({ behavior: "smooth", block: "center" });
-          // Proactively trigger highlight class
+          // 主动触发布气泡的高亮动画，找到消息气泡并手动添加高亮类名
           const bubble = element.querySelector(".message-bubble");
           if (bubble) {
             bubble.classList.add("highlight");
+            // 2.5秒后移除高亮类名
             setTimeout(() => bubble.classList.remove("highlight"), 2500);
           }
         }
@@ -153,7 +162,7 @@ const Chat = () => {
         overflow: "hidden",
       }}
     >
-      {/* Left Chat Area */}
+      {/* 左侧聊天区域 */}
       <div
         style={{
           flex: 1,
@@ -284,6 +293,7 @@ const Chat = () => {
           }}
         >
           <ChatInput
+            key={router.query.id as string || "new-chat"}
             activeTemplate={activeTemplate}
             onTemplateSelect={setActiveTemplate}
             templateVariables={templateVariables}
@@ -291,7 +301,7 @@ const Chat = () => {
         </div>
       </div>
 
-      {/* Right Configuration Area */}
+      {/* 右侧配置区域 */}
       {activeTemplate && (
         <div
           style={{
@@ -305,7 +315,7 @@ const Chat = () => {
             overflow: "visible",
           }}
         >
-          {/* Toggle Button */}
+          {/* 配置区域展开/收起切换按钮 */}
           <div
             onClick={() => setIsConfigVisible(!isConfigVisible)}
             style={{
@@ -374,13 +384,25 @@ const Chat = () => {
                     <div
                       style={{
                         fontWeight: 600,
-                        marginBottom: 12,
+                        marginBottom: 4,
                         fontSize: "14px",
                         color: "#333",
                       }}
                     >
                       {v.label || v.name}
+                      {v.required && <span style={{ color: '#ff4d4f', marginLeft: 4 }}>*</span>}
                     </div>
+                    {v.description && (
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "#94a3b8",
+                          marginBottom: 12,
+                        }}
+                      >
+                        {v.description}
+                      </div>
+                    )}
 
                     {v.type === "text" ? (
                       <Input
@@ -435,24 +457,24 @@ const Chat = () => {
                           (v.type === "multi-select" &&
                             Array.isArray(selectedValue) &&
                             selectedValue.length > 0)) && (
-                          <div
-                            style={{
-                              marginTop: 12,
-                              fontSize: "13px",
-                              color: "#94a3b8",
-                              display: "flex",
-                              alignItems: "start",
-                              gap: 8,
-                              paddingLeft: 4,
-                            }}
-                          >
-                            <span>
-                              {v.type === "multi-select"
-                                ? "已选择多项"
-                                : selectedOption?.description}
-                            </span>
-                          </div>
-                        )}
+                            <div
+                              style={{
+                                marginTop: 12,
+                                fontSize: "13px",
+                                color: "#94a3b8",
+                                display: "flex",
+                                alignItems: "start",
+                                gap: 8,
+                                paddingLeft: 4,
+                              }}
+                            >
+                              <span>
+                                {v.type === "multi-select"
+                                  ? "已选择多项"
+                                  : selectedOption?.description}
+                              </span>
+                            </div>
+                          )}
                       </>
                     )}
                   </div>

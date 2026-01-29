@@ -19,7 +19,8 @@ import {
 import { useRouter } from 'next/router';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
-import { fetchConversations, deleteConversation, updateConversation, setCurrentConversationId, clearCurrentMessages } from '@/store/slices/conversationSlice';
+import { fetchConversations, deleteConversation, updateConversation, setCurrentConversationId, clearCurrentMessages, resetState } from '@/store/slices/conversationSlice';
+import { clearMessages } from '@/store/slices/chatSlice';
 
 const { Header, Sider, Content } = Layout;
 
@@ -45,6 +46,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
     const handleLogout = () => {
         dispatch(logout());
+        dispatch(resetState()); // 重置会话记录
+        dispatch(clearMessages()); // 重置聊天内容
         router.push('/login');
     };
 
@@ -204,10 +207,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                                         marginBottom: 8,
                                         letterSpacing: '1px',
                                         cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        userSelect: 'none',
                                         marginTop: 16
                                     }}
                                 >

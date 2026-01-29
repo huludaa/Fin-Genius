@@ -78,6 +78,15 @@ const chatSlice = createSlice({
                 state.messages[state.messages.length - 1].id = action.payload;
             }
         },
+        updateUserMessageId: (state, action: PayloadAction<{ content: string; id: number }>) => {
+            // Find the last user message matching the content or just the last user message
+            for (let i = state.messages.length - 1; i >= 0; i--) {
+                if (state.messages[i].role === 'user' && state.messages[i].content === action.payload.content) {
+                    state.messages[i].id = action.payload.id;
+                    break;
+                }
+            }
+        },
         updateMessageStarStatus: (state, action: PayloadAction<{ id: number, is_starred: boolean }>) => {
             const msg = state.messages.find(m => m.id === action.payload.id);
             if (msg) {
@@ -120,6 +129,7 @@ export const {
     addMessage,
     updateLastMessage,
     updateLastMessageId,
+    updateUserMessageId,
     updateMessageStarStatus,
     setLoading,
     clearMessages,

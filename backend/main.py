@@ -7,12 +7,12 @@ from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
 
-# Import all models to register them with Base.metadata
+# 导入所有模型以向 Base.metadata 注册
 from app.models.user import User
 from app.models.prompt_template import PromptTemplate
 from app.models.conversation import Conversation, ConversationMessage
 
-# Create tables
+# 自动创建数据库表
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -28,7 +28,7 @@ async def startup_event():
         if hasattr(route, "path"):
             print(f"DEBUG: Route: {route.path}")
 
-# CORS
+# 跨域配置 (CORS)
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -54,7 +54,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"detail": str(exc), "traceback": traceback.format_exc()},
     )
-    # Manual CORS headers for exceptions
+    # 异常处理时的手动跨域头设置
     response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
     response.headers["Access-Control-Allow-Credentials"] = "true"
     response.headers["Access-Control-Allow-Methods"] = "*"

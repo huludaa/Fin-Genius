@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { Input, Button, Upload, Space, Select, Tag, Modal, Spin, message as antdMessage } from 'antd';
 import { SendOutlined, UploadOutlined, StopOutlined, PaperClipOutlined, AppstoreOutlined } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { addMessage, startStreaming, appendToLastMessage, endStreaming, setLoading, updateLastMessageId, updateMessageCompliance } from '@/store/slices/chatSlice';
+import { addMessage, startStreaming, appendToLastMessage, endStreaming, setLoading, updateLastMessageId, updateMessageCompliance, updateUserMessageId } from '@/store/slices/chatSlice';
 import { fetchTemplates } from '@/store/slices/promptTemplateSlice';
 import { fetchConversations, saveMessage, createNewConversation, setCurrentConversationId } from '@/store/slices/conversationSlice';
 import api from '@/lib/axios';
@@ -36,6 +36,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
         dispatch(fetchTemplates());
     }, [dispatch]);
 
+    // 停止生成逻辑
     const handleStop = (reason: 'manual' | 'new_message' | 'page_switch' = 'manual') => {
         if (abortControllerRef.current) {
             stopReasonRef.current = reason;
@@ -46,11 +47,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
         dispatch(setLoading(false));
     };
 
-    // New: Handle file selection and immediate parsing
+    // 新增：处理文件选择并立即触发后端解析
     const handleFileChange = async ({ file, fileList: newFileList }: any) => {
         setFileList(newFileList);
 
-        // If it's a new file and not already parsed/parsing
+        // 如果是新选中的文件且尚未解析
         if (file.status !== 'removed' && !file.parsedContent) {
             const uid = file.uid;
             setParsingFiles(prev => ({ ...prev, [uid]: true }));
@@ -62,12 +63,12 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
 
-                // Update the file object in fileList with parsed content
+                // 更新文件对象，填入解析后的文本内容
                 setFileList(prev => prev.map(f =>
                     f.uid === uid ? { ...f, parsedContent: res.data.content, status: 'done' } : f
                 ));
             } catch (e) {
-                console.error("Parse error", e);
+                console.error("解析错误", e);
                 antdMessage.error(`${file.name} 解析失败，请重试`);
                 setFileList(prev => prev.filter(f => f.uid !== uid));
             } finally {
@@ -82,7 +83,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
             await new Promise(resolve => setTimeout(resolve, 100));
         }
 
-        // Check if any files are still parsing
+        // 检查是否有文件正在解析中
         const isParsing = Object.values(parsingFiles).some(v => v);
         if (isParsing) {
             antdMessage.loading("正在解析文档，请稍候...");
@@ -98,7 +99,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
             return;
         }
 
-        // Combine all pre-parsed content
+        // 合并所有已解析的文件内容
         let contextFromFile = "";
         const parsedContents = fileList
             .filter(f => f.parsedContent)
@@ -111,12 +112,42 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
         let finalContent = prompt;
         if (activeTemplate && activeTemplate.template_content) {
             let content = activeTemplate.template_content;
+            let variableContext = "";
+            const missingRequired: string[] = [];
+
             if (templateVariables) {
-                Object.keys(templateVariables).forEach(key => {
-                    content = content.split(`{${key}}`).join(templateVariables[key]);
+                activeTemplate.variables?.forEach((v: any) => {
+                    const value = templateVariables[v.name];
+                    if (value) {
+                        // 替换变量占位符
+                        content = content.split(`{${v.name}}`).join(value);
+
+                        // 捕捉描述信息以增强 AI 背景上下文
+                        const optionDesc = v.options?.find((opt: any) => opt.value === value)?.description;
+                        if (v.description || optionDesc) {
+                            variableContext += `\n- ${v.label || v.name}: ${value}${v.description ? ` (${v.description})` : ""}${optionDesc ? ` -> 含义说明: ${optionDesc}` : ""}`;
+                        }
+                    } else if (v.required) {
+                        missingRequired.push(v.label || v.name);
+                    } else {
+                        // 对于未填写的选填项，将占位符替换为“不作要求”
+                        content = content.split(`{${v.name}}`).join("不作要求");
+                    }
                 });
             }
-            finalContent = content + (prompt ? `\n\n具体需求: ${prompt}` : "");
+
+            if (missingRequired.length > 0) {
+                antdMessage.error(`请填写必填项: ${missingRequired.join(', ')}`);
+                return;
+            }
+
+            if (variableContext) {
+                finalContent = `[背景信息 - 模板项说明]:${variableContext}\n\n${content}`;
+            } else {
+                finalContent = content;
+            }
+
+            finalContent += (prompt ? `\n\n具体需求: ${prompt}` : "");
         }
 
         finalContent += contextFromFile;
@@ -159,7 +190,12 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
             return;
         }
 
-        // REMOVED: dispatch(startStreaming()); - Move to first chunk reception
+        // 立即保存用户消息以获取 ID，从而实时启用复制/收藏功能
+        const saveUserResult: any = await dispatch(saveMessage({ id: effectiveId, role: 'user', content: displayContent }));
+        if (saveUserResult?.payload?.id) {
+            dispatch(updateUserMessageId({ content: displayContent, id: saveUserResult.payload.id }));
+        }
+
         const controller = new AbortController();
         abortControllerRef.current = controller;
 
@@ -205,14 +241,13 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                 fullResponse += chunk;
             }
 
-            await dispatch(saveMessage({ id: effectiveId, role: 'user', content: displayContent }));
             const saveAssistantResult: any = await dispatch(saveMessage({ id: effectiveId, role: 'assistant', content: fullResponse }));
 
             if (saveAssistantResult?.payload?.id) {
                 const assistantId = saveAssistantResult.payload.id;
                 dispatch(updateLastMessageId(assistantId));
 
-                // Trigger compliance check automatically
+                // 自动触发合规性检查
                 try {
                     const compRes = await api.post('/ai/compliance-check', {
                         text: fullResponse,
@@ -225,7 +260,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                         }));
                     }
                 } catch (e) {
-                    console.error("Compliance check failed", e);
+                    console.error("合规性检查失败", e);
                 }
             }
             dispatch(fetchConversations());
@@ -255,7 +290,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
 
     return (
         <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', position: 'relative' }}>
-            {/* Upload Button */}
+            {/* 文件上传按钮 */}
             <Upload
                 fileList={fileList}
                 onChange={handleFileChange}
@@ -279,7 +314,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                 />
             </Upload>
 
-            {/* Input Box Capsule */}
+            {/* 输入框主体 */}
             <div style={{
                 flex: 1,
                 display: 'flex',
@@ -291,7 +326,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                 transition: 'all 0.3s',
                 position: 'relative'
             }}>
-                {/* File Preview Chips */}
+                {/* 文件预览标签 */}
                 {fileList.length > 0 && (
                     <div style={{ display: 'flex', gap: 8, padding: '8px 0 4px', flexWrap: 'wrap' }}>
                         {fileList.map((file, idx) => (
@@ -341,7 +376,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                 </div>
             </div>
 
-            {/* Template Selector Button */}
+            {/* 模板选择器按钮 */}
             <div style={{ position: 'relative' }}>
                 <Button
                     size="large"
@@ -365,7 +400,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                     模板
                 </Button>
 
-                {/* Template Selector Panel */}
+                {/* 模板选择器面板 */}
                 {isSelectorOpen && (
                     <div style={{
                         position: 'absolute',

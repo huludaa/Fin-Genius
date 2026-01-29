@@ -21,7 +21,12 @@ const Favorites = () => {
         dispatch(fetchStarredMessages());
     }, [dispatch]);
 
-    const starredConversations = conversations.filter(c => c.is_starred);
+    const starredConversations = conversations
+        .filter(c => c.is_starred)
+        .sort((a, b) => new Date(b.starred_at || b.updated_at || b.created_at).getTime() - new Date(a.starred_at || a.updated_at || a.created_at).getTime());
+
+    const sortedStarredMessages = [...starredMessages]
+        .sort((a, b) => new Date(b.starred_at || b.created_at).getTime() - new Date(a.starred_at || a.created_at).getTime());
 
     const handleUnstarConversation = (id: number) => {
         dispatch(updateConversation({ id, is_starred: false }));
@@ -92,7 +97,7 @@ const Favorites = () => {
                                             </Title>
                                             <Space style={{ fontSize: '12px', color: '#94a3b8' }}>
                                                 <ClockCircleOutlined />
-                                                <span>收藏于 {conv.updated_at ? new Date(conv.updated_at).toLocaleString() : '最近'}</span>
+                                                <span>收藏于 {conv.starred_at ? new Date(conv.starred_at).toLocaleString() : '最近'}</span>
                                             </Space>
                                         </Space>
                                         <Button
@@ -116,7 +121,7 @@ const Favorites = () => {
                 ) : !loading && (
                     starredMessages.length > 0 ? (
                         <List
-                            dataSource={starredMessages}
+                            dataSource={sortedStarredMessages}
                             renderItem={(msg) => {
                                 const conv = conversations.find(c => c.id === msg.conversation_id);
                                 const snippet = msg.content.length > 100 ? msg.content.substring(0, 100) + '...' : msg.content;
@@ -145,7 +150,7 @@ const Favorites = () => {
                                                     {snippet}
                                                 </div>
                                                 <div style={{ marginTop: 12, fontSize: '12px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                                    <ClockCircleOutlined /> 收藏于 {new Date(msg.created_at).toLocaleString()}
+                                                    <ClockCircleOutlined /> 收藏于 {msg.starred_at ? new Date(msg.starred_at).toLocaleString() : new Date(msg.created_at).toLocaleString()}
                                                 </div>
                                             </div>
                                             <Space>

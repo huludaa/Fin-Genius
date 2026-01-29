@@ -23,6 +23,11 @@ def update_conversation(db: Session, conversation_id: int, title: Optional[str] 
             db_obj.title = title
         if is_starred is not None:
             db_obj.is_starred = is_starred
+            if is_starred:
+                from sqlalchemy.sql import func
+                db_obj.starred_at = func.now()
+            else:
+                db_obj.starred_at = None
         from sqlalchemy.sql import func
         db_obj.updated_at = func.now() # Force update timestamp
         db.commit()
@@ -56,6 +61,11 @@ def update_message_star(db: Session, message_id: int, is_starred: bool):
     db_obj = get_message(db, message_id=message_id)
     if db_obj:
         db_obj.is_starred = is_starred
+        if is_starred:
+            from sqlalchemy.sql import func
+            db_obj.starred_at = func.now()
+        else:
+            db_obj.starred_at = None
         db.commit()
         db.refresh(db_obj)
     return db_obj

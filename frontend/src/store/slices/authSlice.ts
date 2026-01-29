@@ -96,7 +96,7 @@ const authSlice = createSlice({
             .addCase(fetchUser.rejected, (state, action) => {
                 state.status = 'failed';
                 state.error = (action.payload as any)?.detail || 'Authentication failed';
-                // If fetching user fails (e.g., token expired or server down), we might want to clear the token
+                // 如果获取用户信息失败（如 token 过期或服务器宕机），可能需要在此清除 token
                 // state.token = null;
                 // localStorage.removeItem('token');
             });

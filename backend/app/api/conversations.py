@@ -21,6 +21,7 @@ class Message(MessageBase):
     id: int
     conversation_id: int
     is_starred: bool = False
+    starred_at: Optional[datetime] = None
     compliance_result: Optional[str] = None
     created_at: datetime
     class Config:
@@ -41,6 +42,7 @@ class ConversationSchema(ConversationBase):
     id: int
     user_id: int
     is_starred: bool = False
+    starred_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     class Config:
@@ -96,7 +98,7 @@ async def add_message(
         if not conversation or conversation.user_id != current_user.id:
             raise HTTPException(status_code=404, detail="Conversation not found")
         
-        # If this is the first user message, update the conversation title using AI
+        # 如果这是首条用户消息，使用 AI 自动为对话生成标题
         if message_in.role == "user":
             messages = crud_conversation.get_messages_by_conversation(db, conversation_id=id)
             if len(messages) == 0:
@@ -104,7 +106,7 @@ async def add_message(
                 title = await ai_service.generate_title(message_in.content)
                 crud_conversation.update_conversation_title(db, conversation_id=id, title=title)
         
-        # Update conversation's updated_at timestamp
+        # 更新对话的最后活跃时间 (updated_at)
         crud_conversation.update_conversation(db, conversation_id=id)
                 
         return crud_conversation.add_message_to_conversation(db, conversation_id=id, role=message_in.role, content=message_in.content)
@@ -150,7 +152,7 @@ def toggle_message_star(
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
     
-    # Check conversation ownership
+    # 检查对话所有权
     conversation = crud_conversation.get_conversation(db, conversation_id=message.conversation_id)
     if not conversation or conversation.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Message not found")

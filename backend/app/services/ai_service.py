@@ -19,23 +19,23 @@ class AIService:
             
             print(f"DEBUG: generate_text_stream called with prompt='{prompt}' history_len={len(history)}")
             
-            # Prepare messages: history + current prompt
+            # 准备消息列表：历史记录 + 当前提示词
             def format_content(text):
                 if "data:image/" in text and ";base64," in text:
-                    # Multimodal content for VL models
+                    # 针对视觉模型的多模态内容处理
                     parts = []
-                    # Simple split to separate text and images
+                    # 简单分割以分离文本和图像
                     segments = text.split("data:image/")
                     if segments[0].strip():
                         parts.append({"type": "text", "text": segments[0].strip()})
                     
                     for seg in segments[1:]:
-                        b64_part = "data:image/" + seg.split("---")[0].strip() # Assuming our separator
-                        # Better detection: look for actual base64 end
-                        actual_content = b64_part.split("\n")[0] # The base64 line
+                        b64_part = "data:image/" + seg.split("---")[0].strip() # 假设这是我们的分隔符
+                        # 更好的检测：寻找实际的 base64 结尾
+                        actual_content = b64_part.split("\n")[0] # base64 数据行
                         parts.append({"type": "image_url", "image_url": {"url": actual_content}})
                         
-                        # Add remaining text in this segment if any
+                        # 如果此段落中有剩余文本，也一并添加
                         remaining = seg.split("\n", 1)
                         if len(remaining) > 1 and remaining[1].strip():
                             parts.append({"type": "text", "text": remaining[1].strip()})
@@ -68,11 +68,11 @@ class AIService:
             except Exception as e:
                 yield f"Error calling Qwen API: {str(e)}"
         else:
-            # Simulation / Fallback if no key
-            full_text = f"Simulated AI response for: {prompt}. (Configure DASHSCOPE_API_KEY in .env to use Qwen)\n\n"
-            full_text += "Based on your input, here is a structured suggestion:\n"
-            full_text += "- Point 1: Relevance to finance.\n"
-            full_text += "- Point 2: Market trends.\n"
+            # 模拟/兜底逻辑（如果未配置 API Key）
+            full_text = f"已模拟 AI 回复: {prompt}。（请在 .env 中配置 DASHSCOPE_API_KEY 以对接通义千问）\n\n"
+            full_text += "根据您的输入，以下是结构化建议：\n"
+            full_text += "- 建议 1: 与金融方案的相关性。\n"
+            full_text += "- 建议 2: 市场反馈趋势。\n"
             
             for word in full_text.split(" "):
                  yield f"{word} "
@@ -115,7 +115,7 @@ class AIService:
                     max_tokens=20
                 )
                 title = response.choices[0].message.content.strip()
-                # Clean up if AI was chatty
+                # 如果 AI 返回了多余的前缀（如 "Title:"），进行清理
                 if title.lower().startswith("title:"):
                     title = title[6:].strip()
                 return title[:15]
@@ -128,7 +128,7 @@ class AIService:
     @staticmethod
     def parse_uploaded_file(file) -> str:
         """
-        Parses uploaded file content (txt, docx, etc.) into plain text.
+        将上传的文件内容（txt, docx, pdf 等）解析为纯文本。
         """
         filename = file.filename.lower()
         content = ""
@@ -155,10 +155,10 @@ class AIService:
                 elif filename.endswith('.webp'): mime = "image/webp"
                 return f"data:{mime};base64,{encoded}"
             else:
-                # Default as text (utf-8)
+                # 默认按文本 (utf-8) 处理
                 content = file_bytes.decode('utf-8', errors='ignore')
             
-            # Prevent 128k limit error by truncating
+            # 自动截断以防超过上下文限制（约 10 万字符）
             MAX_CHARS = 100000 
             if len(content) > MAX_CHARS:
                 content = content[:MAX_CHARS] + "\n\n[内容过长，已被自动截断...]"

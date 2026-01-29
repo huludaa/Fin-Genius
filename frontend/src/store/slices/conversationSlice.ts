@@ -5,6 +5,7 @@ export interface Conversation {
     id: number;
     title: string;
     is_starred: boolean;
+    starred_at?: string;
     created_at: string;
     updated_at: string;
 }
@@ -15,6 +16,7 @@ export interface Message {
     role: 'user' | 'assistant';
     content: string;
     is_starred: boolean;
+    starred_at?: string;
     created_at: string;
 }
 
@@ -141,6 +143,13 @@ const conversationSlice = createSlice({
         },
         clearCurrentMessages: (state) => {
             state.currentMessages = [];
+        },
+        resetState: (state) => {
+            state.conversations = [];
+            state.currentConversationId = null;
+            state.currentMessages = [];
+            state.starredMessages = [];
+            state.error = null;
         }
     },
     extraReducers: (builder) => {
@@ -172,15 +181,15 @@ const conversationSlice = createSlice({
                 }
             })
             .addCase(saveMessage.fulfilled, (state, action) => {
-                // If the message belongs to current conversation, add it
+                // 如果消息属于当前对话，则将其添加到列表中
                 if (state.currentConversationId === action.payload.conversation_id) {
                     state.currentMessages.push(action.payload);
                 }
-                // Update conversation's updated_at or title in the list if needed
+                // 如果需要，更新列表中的对话“更新时间”或“标题”
                 const conv = state.conversations.find(c => c.id === action.payload.conversation_id);
                 if (conv) {
                     conv.updated_at = new Date().toISOString();
-                    // If first message, backend already updated title, but we might want to refresh list
+                    // 如果是第一条消息，后端已经更新了对应标题，但我们可能需要在此刷新列表状态
                 }
             })
             .addCase(deleteConversation.fulfilled, (state, action) => {
@@ -195,7 +204,7 @@ const conversationSlice = createSlice({
                 if (message) {
                     message.is_starred = action.payload.is_starred;
                 }
-                // Also update in starredMessages list
+                // 同时更新收藏消息列表
                 if (!action.payload.is_starred) {
                     state.starredMessages = state.starredMessages.filter(m => m.id !== action.payload.id);
                 } else if (!state.starredMessages.find(m => m.id === action.payload.id)) {
@@ -208,5 +217,5 @@ const conversationSlice = createSlice({
     },
 });
 
-export const { setCurrentConversationId, clearCurrentMessages } = conversationSlice.actions;
+export const { setCurrentConversationId, clearCurrentMessages, resetState } = conversationSlice.actions;
 export default conversationSlice.reducer;
