@@ -251,6 +251,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                 try {
                     const compRes = await api.post('/ai/compliance-check', {
                         text: fullResponse,
+                        // text: "本产品保证100%收益，零风险，稳赚不赔！", // 强制触发敏感词(测试用)
                         message_id: assistantId
                     });
                     if (compRes.data) {

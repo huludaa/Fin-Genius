@@ -1,6 +1,6 @@
 import React from 'react';
 import { Avatar, Space, Button, Tooltip, message as antdMessage } from 'antd';
-import { UserOutlined, RobotOutlined, StarOutlined, StarFilled, CopyOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { UserOutlined, RobotOutlined, StarOutlined, StarFilled, CopyOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import { useAppDispatch } from '@/store/hooks';
 import { updateMessageStar } from '@/store/slices/conversationSlice';
@@ -82,20 +82,37 @@ const Message: React.FC<MessageProps> = ({ id, role, content, isStarred, complia
                         </div>
                     )}
 
-                    {complianceResult && (
-                        <div style={{
-                            marginTop: '12px',
-                            paddingTop: '8px',
-                            borderTop: '1px solid rgba(0,0,0,0.05)',
-                            fontSize: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            color: '#10b981'
-                        }}>
-                            <CheckCircleOutlined /> 合规检测已通过
-                        </div>
-                    )}
+                    {complianceResult && (() => {
+                        try {
+                            const result = JSON.parse(complianceResult);
+                            const isCompliant = result.is_compliant !== false;
+
+                            return (
+                                <div style={{
+                                    marginTop: '12px',
+                                    paddingTop: '8px',
+                                    borderTop: '1px solid rgba(0,0,0,0.05)',
+                                    fontSize: '12px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '4px',
+                                    color: isCompliant ? '#10b981' : '#ef4444'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                                        {isCompliant ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}
+                                        {isCompliant ? '合规检测已通过' : '合规建议：需改进'}
+                                    </div>
+                                    {!isCompliant && result.reason && (
+                                        <div style={{ color: '#64748b', marginLeft: '18px', lineHeight: '1.4' }}>
+                                            {result.reason}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        } catch (e) {
+                            return null;
+                        }
+                    })()}
                 </div>
 
                 {id && (
