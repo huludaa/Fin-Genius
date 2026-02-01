@@ -281,6 +281,7 @@ const Chat = () => {
                   content={msg.content}
                   isStarred={msg.is_starred}
                   complianceResult={(msg as any).compliance_result}
+                  complianceStatus={(msg as any).compliance_status}
                   type={msg.type}
                 />
               </div>

@@ -20,7 +20,7 @@ async def generate_content(
     return StreamingResponse(ai_service.generate_text_stream(history, prompt), media_type="text/plain")
 
 @router.post("/compliance-check")
-def compliance_check(
+async def compliance_check(
     *,
     text: str = Body(..., embed=True),
     message_id: Optional[int] = Body(None),
@@ -35,7 +35,7 @@ def compliance_check(
             except Exception:
                 pass
             
-    result = ai_service.check_compliance(text)
+    result = await ai_service.check_compliance(text)
     
     if message_id:
         crud_conversation.update_message_compliance(db, message_id=message_id, compliance_result=json.dumps(result))

@@ -7,6 +7,7 @@ interface Message {
     content: string;
     is_starred?: boolean;
     compliance_result?: string;
+    compliance_status?: 'pending' | 'completed' | 'none';
     type?: 'text' | 'error' | 'loading';
 }
 
@@ -100,10 +101,25 @@ const chatSlice = createSlice({
             // If id is provided, find by id, otherwise update last assistant message
             if (action.payload.id) {
                 const msg = state.messages.find(m => m.id === action.payload.id);
-                if (msg) msg.compliance_result = action.payload.compliance_result;
+                if (msg) {
+                    msg.compliance_result = action.payload.compliance_result;
+                    msg.compliance_status = 'completed';
+                }
             } else {
                 const lastAssistant = [...state.messages].reverse().find(m => m.role === 'assistant');
-                if (lastAssistant) lastAssistant.compliance_result = action.payload.compliance_result;
+                if (lastAssistant) {
+                    lastAssistant.compliance_result = action.payload.compliance_result;
+                    lastAssistant.compliance_status = 'completed';
+                }
+            }
+        },
+        updateComplianceStatus: (state, action: PayloadAction<{ id?: number, status: 'pending' | 'completed' | 'none' }>) => {
+            if (action.payload.id) {
+                const msg = state.messages.find(m => m.id === action.payload.id);
+                if (msg) msg.compliance_status = action.payload.status;
+            } else {
+                const lastAssistant = [...state.messages].reverse().find(m => m.role === 'assistant');
+                if (lastAssistant) lastAssistant.compliance_status = action.payload.status;
             }
         },
         setLoading: (state, action: PayloadAction<boolean>) => {
@@ -136,6 +152,7 @@ export const {
     startStreaming,
     appendToLastMessage,
     endStreaming,
-    updateMessageCompliance
+    updateMessageCompliance,
+    updateComplianceStatus
 } = chatSlice.actions;
 export default chatSlice.reducer;

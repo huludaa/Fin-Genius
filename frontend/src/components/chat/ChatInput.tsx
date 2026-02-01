@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { Input, Button, Upload, Space, Select, Tag, Modal, Spin, message as antdMessage } from 'antd';
 import { SendOutlined, UploadOutlined, StopOutlined, PaperClipOutlined, AppstoreOutlined } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { addMessage, startStreaming, appendToLastMessage, endStreaming, setLoading, updateLastMessageId, updateMessageCompliance, updateUserMessageId } from '@/store/slices/chatSlice';
+import { addMessage, startStreaming, appendToLastMessage, endStreaming, setLoading, updateLastMessageId, updateMessageCompliance, updateUserMessageId, updateComplianceStatus } from '@/store/slices/chatSlice';
 import { fetchTemplates } from '@/store/slices/promptTemplateSlice';
 import { fetchConversations, saveMessage, createNewConversation, setCurrentConversationId } from '@/store/slices/conversationSlice';
 import api from '@/lib/axios';
@@ -249,9 +249,9 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
 
                 // 自动触发合规性检查
                 try {
+                    dispatch(updateComplianceStatus({ id: assistantId, status: 'pending' }));
                     const compRes = await api.post('/ai/compliance-check', {
                         text: fullResponse,
-                        // text: "本产品保证100%收益，零风险，稳赚不赔！", // 强制触发敏感词(测试用)
                         message_id: assistantId
                     });
                     if (compRes.data) {
@@ -262,6 +262,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                     }
                 } catch (e) {
                     console.error("合规性检查失败", e);
+                    dispatch(updateComplianceStatus({ id: assistantId, status: 'completed' }));
                 }
             }
             dispatch(fetchConversations());

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Avatar, Space, Button, Tooltip, message as antdMessage } from 'antd';
+import { Avatar, Space, Button, Tooltip, Spin, message as antdMessage } from 'antd';
 import { UserOutlined, RobotOutlined, StarOutlined, StarFilled, CopyOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import { useAppDispatch } from '@/store/hooks';
@@ -12,10 +12,11 @@ interface MessageProps {
     content: string;
     isStarred?: boolean;
     complianceResult?: string;
+    complianceStatus?: 'pending' | 'completed' | 'none';
     type?: 'text' | 'error' | 'loading';
 }
 
-const Message: React.FC<MessageProps> = ({ id, role, content, isStarred, complianceResult, type }) => {
+const Message: React.FC<MessageProps> = ({ id, role, content, isStarred, complianceResult, complianceStatus, type }) => {
     const dispatch = useAppDispatch();
 
     const handleCopy = () => {
@@ -82,7 +83,22 @@ const Message: React.FC<MessageProps> = ({ id, role, content, isStarred, complia
                         </div>
                     )}
 
-                    {complianceResult && (() => {
+                    {complianceStatus === 'pending' && (
+                        <div style={{
+                            marginTop: '12px',
+                            paddingTop: '8px',
+                            borderTop: '1px solid rgba(0,0,0,0.05)',
+                            fontSize: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            color: '#94a3b8'
+                        }}>
+                            <Spin size="small" style={{ transform: 'scale(0.8)' }} /> 合规检测中...
+                        </div>
+                    )}
+
+                    {complianceStatus !== 'pending' && complianceResult && (() => {
                         try {
                             const result = JSON.parse(complianceResult);
                             const isCompliant = result.is_compliant !== false;

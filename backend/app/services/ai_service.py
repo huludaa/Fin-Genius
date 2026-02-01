@@ -79,27 +79,58 @@ class AIService:
                  time.sleep(0.05) 
 
     @staticmethod
-    def check_compliance(text: str) -> dict:
-        # 扩展的风险关键词列表
-        risk_keywords = [
-            "保证收益", "保本", "零风险", "稳赚不赔",
-            "无风险", "100%收益", "绝对安全", "承诺收益",
-            "保底", "稳赚", "只赚不赔", "高收益无风险"
-        ]
-        found_risks = [k for k in risk_keywords if k in text]
-        
-        if found_risks:
+    async def check_compliance(text: str) -> dict:
+        import json
+        if settings.DASHSCOPE_API_KEY:
+            client = AIService._get_openai_client()
+            
+            prompt = f"""你是一位资深的金融营销合规专家。请对以下营销文案进行严谨的合规性审查。
+
+审查标准：
+1. 禁止明示或暗示“保本”、“无风险”、“保证收益”、“稳赚不赔”、“绝对安全”等类似表述（包括变体，如“百分百收益”）。
+2. 禁止虚假夸大产品收益或过往业绩。
+3. 检查是否有明显的误导性词汇。
+
+待审查文案：
+「{text}」
+
+请直接以 JSON 格式输出结果，格式要求如下：
+{{
+    "is_compliant": boolean (合规为 true，违规为 false),
+    "reason": "简明扼要的违规原因说明或合规理由",
+    "suggestions": ["修改建议1", "修改建议2"]
+}}
+注意：只需返回 JSON，不要包含任何 Markdown 格式符号。"""
+
+            try:
+                response = await client.chat.completions.create(
+                    model="qwen-plus",
+                    messages=[{"role": "system", "content": "你是一个严格的金融合规助手。"},
+                             {"role": "user", "content": prompt}],
+                    temperature=0.1 # 降低随机性，保证判断一致性
+                )
+                
+                content = response.choices[0].message.content.strip()
+                # 清洗可能存在的 markdown 块
+                if content.startswith("```"):
+                    content = content.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+                if content.startswith("json"):
+                    content = content[4:].strip()
+                
+                return json.loads(content)
+            except Exception as e:
+                print(f"AI 合规检测异常: {e}")
+                return {
+                    "is_compliant": False,
+                    "reason": f"合规检测服务暂时不可用 (Error: {str(e)})",
+                    "suggestions": ["请稍后再试"]
+                }
+        else:
             return {
                 "is_compliant": False,
-                "reason": f"文案包含敏感金融承诺词汇: {', '.join(found_risks)}。根据监管要求，营销文案不得明示或暗示保本保收益。",
-                "suggestions": ["建议删除‘保本’等表述", "增加‘风险自担’等合规提示词"]
+                "reason": "合规检测服务未配置 (Missing API Key)",
+                "suggestions": ["请联系管理员配置 DASHSCOPE_API_KEY"]
             }
-            
-        return {
-            "is_compliant": True,
-            "reason": "内容符合金融营销通用合规准则，未发现明显违规承诺词语。",
-            "suggestions": []
-        }
     
     @staticmethod
     async def generate_title(first_message: str) -> str:
