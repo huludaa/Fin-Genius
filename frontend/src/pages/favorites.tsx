@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ReactElement } from 'react';
-import { Tabs, List, Card, Typography, Space, Button, Empty, Tag, Modal, message, Spin } from 'antd';
-import { StarFilled, StarOutlined, MessageOutlined, ClockCircleOutlined, DeleteOutlined, RobotOutlined, UserOutlined } from '@ant-design/icons';
+import { Tabs, List, Card, Typography, Space, Button, Empty, Tag, Modal, message, Spin, Input } from 'antd';
+import { StarFilled, StarOutlined, MessageOutlined, ClockCircleOutlined, DeleteOutlined, RobotOutlined, UserOutlined, SearchOutlined } from '@ant-design/icons';
 import MainLayout from '@/components/layout/MainLayout';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchConversations, updateConversation, fetchStarredMessages, updateMessageStar } from '@/store/slices/conversationSlice';
@@ -15,6 +15,7 @@ const Favorites = () => {
     const router = useRouter();
     const { conversations, starredMessages, loading } = useAppSelector((state) => state.conversations);
     const [activeTab, setActiveTab] = useState('conversations');
+    const [searchText, setSearchText] = useState('');
 
     useEffect(() => {
         dispatch(fetchConversations());
@@ -25,8 +26,19 @@ const Favorites = () => {
         .filter(c => c.is_starred)
         .sort((a, b) => new Date(b.starred_at || b.updated_at || b.created_at).getTime() - new Date(a.starred_at || a.updated_at || a.created_at).getTime());
 
+    const filteredConversations = starredConversations.filter(conv =>
+        conv.title.toLowerCase().includes(searchText.toLowerCase())
+    );
+
     const sortedStarredMessages = [...starredMessages]
         .sort((a, b) => new Date(b.starred_at || b.created_at).getTime() - new Date(a.starred_at || a.created_at).getTime());
+
+    const filteredMessages = sortedStarredMessages.filter(msg => {
+        const conv = conversations.find(c => c.id === msg.conversation_id);
+        const contentMatch = msg.content.toLowerCase().includes(searchText.toLowerCase());
+        const titleMatch = conv?.title.toLowerCase().includes(searchText.toLowerCase()) || false;
+        return contentMatch || titleMatch;
+    });
 
     const handleUnstarConversation = (id: number) => {
         dispatch(updateConversation({ id, is_starred: false }));
@@ -48,9 +60,19 @@ const Favorites = () => {
 
     return (
         <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 20px' }}>
-            <div style={{ marginBottom: 32 }}>
-                <Title level={2}>我的收藏</Title>
-                <Text type="secondary">管理您收藏的对话和消息</Text>
+            <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                    <Title level={2} style={{ marginBottom: 8 }}>我的收藏</Title>
+                    <Text type="secondary">管理您收藏的对话和消息</Text>
+                </div>
+                <Input
+                    placeholder="搜索收藏内容..."
+                    prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    style={{ width: '300px', borderRadius: '8px', height: '40px', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}
+                    allowClear
+                />
             </div>
 
             <Tabs
@@ -61,7 +83,7 @@ const Favorites = () => {
                         key: 'conversations',
                         label: (
                             <span>
-                                <MessageOutlined /> 收藏对话 ({starredConversations.length})
+                                <MessageOutlined /> 收藏对话 ({filteredConversations.length})
                             </span>
                         ),
                     },
@@ -69,7 +91,7 @@ const Favorites = () => {
                         key: 'messages',
                         label: (
                             <span>
-                                <StarFilled /> 收藏消息 ({starredMessages.length})
+                                <StarFilled /> 收藏消息 ({filteredMessages.length})
                             </span>
                         ),
                     }
@@ -80,9 +102,9 @@ const Favorites = () => {
                 {loading && <div style={{ textAlign: 'center', padding: '40px' }}><Spin size="large" tip="加载中..." /></div>}
 
                 {!loading && activeTab === 'conversations' ? (
-                    starredConversations.length > 0 ? (
+                    filteredConversations.length > 0 ? (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-                            {starredConversations.map((conv) => (
+                            {filteredConversations.map((conv) => (
                                 <Card
                                     key={conv.id}
                                     hoverable
@@ -119,9 +141,9 @@ const Favorites = () => {
                         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无收藏对话" />
                     )
                 ) : !loading && (
-                    starredMessages.length > 0 ? (
+                    filteredMessages.length > 0 ? (
                         <List
-                            dataSource={sortedStarredMessages}
+                            dataSource={filteredMessages}
                             renderItem={(msg) => {
                                 const conv = conversations.find(c => c.id === msg.conversation_id);
                                 const snippet = msg.content.length > 100 ? msg.content.substring(0, 100) + '...' : msg.content;

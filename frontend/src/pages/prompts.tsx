@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ReactElement } from 'react';
-import { Card, Button, Modal, Space, Tabs, List, Typography, Tooltip, Divider, Table } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, FileTextOutlined } from '@ant-design/icons';
+import { Card, Button, Modal, Space, Tabs, List, Typography, Tooltip, Divider, Table, Input } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, FileTextOutlined, SearchOutlined } from '@ant-design/icons';
 import MainLayout from '@/components/layout/MainLayout';
 import PromptForm from '@/components/prompts/PromptForm';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -16,6 +16,7 @@ const Prompts = () => {
     const [activeTab, setActiveTab] = useState('official');
     const [editingTemplate, setEditingTemplate] = useState<any>(null);
     const [viewingTemplate, setViewingTemplate] = useState<any>(null);
+    const [searchText, setSearchText] = useState('');
 
     const dispatch = useAppDispatch();
     const { templates, status } = useAppSelector((state) => state.promptTemplates);
@@ -57,11 +58,10 @@ const Prompts = () => {
     };
 
     const filteredTemplates = templates.filter(t => {
-        if (activeTab === 'official') {
-            return t.is_official;
-        } else {
-            return t.owner_id == user?.id; // Show my templates
-        }
+        const matchesTab = activeTab === 'official' ? t.is_official : t.owner_id == user?.id;
+        const matchesSearch = t.template_name.toLowerCase().includes(searchText.toLowerCase()) ||
+            (t.description?.toLowerCase().includes(searchText.toLowerCase()) || false);
+        return matchesTab && matchesSearch;
     });
 
     const tabItems = [
@@ -71,22 +71,31 @@ const Prompts = () => {
 
     return (
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
-            <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <Title level={2} style={{ margin: 0 }}>提示词模板</Title>
+            <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px' }}>
+                <div style={{ flex: 1, minWidth: '300px' }}>
+                    <Title level={2} style={{ marginBottom: 8 }}>提示词模板</Title>
                     <Text type="secondary">管理和配置您的 AI 提示词模板</Text>
                 </div>
-                {(activeTab === 'my' || user?.is_superuser) && (
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        size="large"
-                        onClick={() => setIsModalOpen(true)}
-                        style={{ borderRadius: '8px', height: '45px', padding: '0 24px' }}
-                    >
-                        创建新模板
-                    </Button>
-                )}
+                <Space size="middle" style={{ flexWrap: 'wrap' }}>
+                    <Input
+                        placeholder="搜索模板名称或描述..."
+                        prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        style={{ width: '300px', borderRadius: '8px', height: '40px', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}
+                        allowClear
+                    />
+                    {(activeTab === 'my' || user?.is_superuser) && (
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => setIsModalOpen(true)}
+                            style={{ borderRadius: '8px', height: '40px', padding: '0 20px', backgroundColor: '#2563EB', borderColor: '#2563EB' }}
+                        >
+                            创建新模板
+                        </Button>
+                    )}
+                </Space>
             </div>
 
             <Tabs
