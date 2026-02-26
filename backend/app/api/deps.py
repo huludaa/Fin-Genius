@@ -15,6 +15,9 @@ reusable_oauth2 = OAuth2PasswordBearer(
 )
 
 def get_db() -> Generator:
+    """
+    获取数据库会话，并在请求结束时自动关闭
+    """
     try:
         db = SessionLocal()
         yield db
@@ -24,7 +27,11 @@ def get_db() -> Generator:
 def get_current_user(
     db: Session = Depends(get_db), token: str = Depends(reusable_oauth2)
 ) -> User:
+    """
+    通用依赖拦截器：验证 JWT 令牌并返回当前登录的用户对象
+    """
     try:
+        # 解码受保护的令牌
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
@@ -33,9 +40,11 @@ def get_current_user(
         print(f"DEBUG: Auth failed. Token: {token[:20]}... Error: {e}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
+            detail="无效的认证凭证",
         )
+    
+    # 从数据库获取用户详细信息
     user = db.query(User).filter(User.id == int(token_data.sub)).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="用户账户已禁用或不存在")
     return user
