@@ -16,7 +16,7 @@ def read_prompt_templates(
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Retrieve prompt templates.
+    获取提示词模板列表
     """
     templates = crud_prompt_template.get_multi_by_owner(
         db, owner_id=current_user.id, skip=skip, limit=limit
@@ -31,25 +31,26 @@ def create_prompt_template(
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Create new prompt template.
+    创建新的提示词模板
     """
     try:
-        # Strict Admin check
+        # 严格的管理员权限校验
         is_admin = getattr(current_user, 'is_superuser', False)
             
-        # If not admin, force is_official to False (Ignore whatever user sent)
+        # 如果不是管理员，强制将 is_official 设为 False（忽略用户发送的值）
         if not is_admin:
             template_in.is_official = False
             
+        # 数据库持久化：关联当前所有者 ID
         template = crud_prompt_template.create_prompt_template(
             db, prompt_template=template_in, owner_id=current_user.id
         )
         return template
     except Exception as e:
-        print(f"ERROR creating template: {e}")
+        print(f"创建模板出错: {e}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="模板创建失败")
 
 @router.put("/{template_id}", response_model=template_schemas.PromptTemplate)
 def update_prompt_template(
@@ -60,19 +61,19 @@ def update_prompt_template(
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Update a prompt template.
+    更新现有提示词模板
     """
     template = crud_prompt_template.get_prompt_template(db, template_id=template_id)
     if not template:
-        raise HTTPException(status_code=404, detail="Prompt template not found")
+        raise HTTPException(status_code=404, detail="模板未找到")
         
     is_admin = getattr(current_user, 'is_superuser', False)
     
-    # Permission check: Owner OR Admin
+    # 权限校验：仅所有者或管理员可修改
     if template.owner_id != current_user.id and not is_admin:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+        raise HTTPException(status_code=403, detail="权限不足")
         
-    # If not admin, prevent setting is_official to True
+    # 如果不是管理员，防止用户将普通模板篡改为官方模板
     if not is_admin:
         template_in.is_official = False
 
@@ -89,17 +90,17 @@ def delete_prompt_template(
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Delete a prompt template.
+    删除提示词模板
     """
     template = crud_prompt_template.get_prompt_template(db, template_id=template_id)
     if not template:
-        raise HTTPException(status_code=404, detail="Prompt template not found")
+        raise HTTPException(status_code=404, detail="模板未找到")
         
     is_admin = getattr(current_user, 'is_superuser', False)
 
-    # Only Owner or Admin can delete
+    # 仅所有者或管理员可删除
     if template.owner_id != current_user.id and not is_admin:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+        raise HTTPException(status_code=403, detail="权限不足")
         
     template = crud_prompt_template.remove_prompt_template(db, id=template_id)
     return template

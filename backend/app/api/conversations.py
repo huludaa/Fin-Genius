@@ -58,8 +58,8 @@ def read_conversations(
     try:
         return crud_conversation.get_conversations(db, user_id=current_user.id, skip=skip, limit=limit)
     except Exception as e:
-        print(f"Error reading conversations: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"获取会话列表出错: {e}")
+        raise HTTPException(status_code=500, detail="获取会话列表失败")
 
 @router.post("/", response_model=ConversationSchema)
 def create_conversation(
@@ -71,8 +71,8 @@ def create_conversation(
     try:
         return crud_conversation.create_conversation(db, user_id=current_user.id, title=conversation_in.title)
     except Exception as e:
-        print(f"Error creating conversation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"创建会话出错: {e}")
+        raise HTTPException(status_code=500, detail="创建会话失败")
 
 @router.get("/{id}/messages", response_model=List[Message])
 def read_messages(
@@ -82,7 +82,7 @@ def read_messages(
 ) -> Any:
     conversation = crud_conversation.get_conversation(db, conversation_id=id)
     if not conversation or conversation.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        raise HTTPException(status_code=404, detail="未找到该会话")
     return crud_conversation.get_messages_by_conversation(db, conversation_id=id)
 
 @router.post("/{id}/messages", response_model=Message)
@@ -96,7 +96,7 @@ async def add_message(
     try:
         conversation = crud_conversation.get_conversation(db, conversation_id=id)
         if not conversation or conversation.user_id != current_user.id:
-            raise HTTPException(status_code=404, detail="Conversation not found")
+            raise HTTPException(status_code=404, detail="未找到该会话")
         
         # 如果这是首条用户消息，使用 AI 自动为对话生成标题
         if message_in.role == "user":
@@ -111,9 +111,9 @@ async def add_message(
                 
         return crud_conversation.add_message_to_conversation(db, conversation_id=id, role=message_in.role, content=message_in.content)
     except Exception as e:
-        print(f"Error adding message: {e}")
+        print(f"添加消息出错: {e}")
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="添加消息失败")
 
 @router.patch("/{id}", response_model=ConversationSchema)
 def update_conversation(
@@ -125,7 +125,7 @@ def update_conversation(
 ) -> Any:
     conversation = crud_conversation.get_conversation(db, conversation_id=id)
     if not conversation or conversation.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        raise HTTPException(status_code=404, detail="未找到该会话")
     return crud_conversation.update_conversation(db, conversation_id=id, title=conversation_in.title, is_starred=conversation_in.is_starred)
 
 @router.delete("/{id}")
@@ -136,7 +136,7 @@ def delete_conversation(
 ) -> Any:
     conversation = crud_conversation.get_conversation(db, conversation_id=id)
     if not conversation or conversation.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        raise HTTPException(status_code=404, detail="未找到该会话")
     crud_conversation.delete_conversation(db, conversation_id=id)
     return {"status": "ok"}
 
@@ -148,15 +148,17 @@ def toggle_message_star(
     is_starred: bool,
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
+    """ 局部更新：实现营销内容（单条消息）的一键收藏或取消 """
     message = crud_conversation.get_message(db, message_id=message_id)
     if not message:
-        raise HTTPException(status_code=404, detail="Message not found")
+        raise HTTPException(status_code=404, detail="消息不存在")
     
-    # 检查对话所有权
+    # 检查对话所有权：利用 deps 依赖项确保用户只能收藏属于自己的消息（数据隔离）
     conversation = crud_conversation.get_conversation(db, conversation_id=message.conversation_id)
     if not conversation or conversation.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Message not found")
+        raise HTTPException(status_code=404, detail="消息不存在或无权限操作")
         
+    # 调用 CRUD 层更新 is_starred 状态位并记录 starred_at 时间
     return crud_conversation.update_message_star(db, message_id=message_id, is_starred=is_starred)
 
 @router.get("/starred-messages", response_model=List[Message])
