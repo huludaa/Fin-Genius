@@ -42,9 +42,16 @@
    ```
 2. 在 `backend` 目录下创建 `.env` 文件，参照以下配置：
    ```env
+   # 数据库配置（根据实际情况修改！）
    DATABASE_URL=mysql+mysqlconnector://user:password@localhost/fin_genius
-   DASHSCOPE_API_KEY=your_aliyun_api_key
+
+   # 密钥配置（根据实际情况修改！）
    SECRET_KEY=your_jwt_secret_key
+
+   # AI 服务集成配置（根据实际情况修改！）
+   AI_API_KEY=your_api_key_here
+   AI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+   AI_MODEL_NAME=qwen3.5-plus
    ```
 3. 启动后端服务器：
    ```bash

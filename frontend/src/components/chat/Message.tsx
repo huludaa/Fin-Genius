@@ -75,7 +75,7 @@ const Message: React.FC<MessageProps> = ({ id, role, content, isStarred, complia
                     {type === 'loading' ? (
                         <div style={{ display: 'flex', gap: '8px', padding: '10px 4px', alignItems: 'center' }}>
                             <div className="dot-pulse" />
-                            <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 500 }}>AI 正在准备回答...</span>
+                            <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 500 }}>思考过程中...</span>
                         </div>
                     ) : (
                         <div className="markdown-content">

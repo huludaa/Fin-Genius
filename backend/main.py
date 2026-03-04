@@ -15,15 +15,17 @@ from app.models.conversation import Conversation, ConversationMessage
 # 自动创建数据库表
 Base.metadata.create_all(bind=engine)
 
+# 创建 FastAPI 应用
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    title=settings.PROJECT_NAME, # 设置 Swagger 自动文档标题
+    openapi_url=f"{settings.API_V1_STR}/openapi.json" # 设置 Swagger 自动文档接口地址
 )
 
+# 启动事件
 @app.on_event("startup")
 async def startup_event():
     print(f"DEBUG: App started. API_V1_STR={settings.API_V1_STR}")
-    # Force print routes
+    # 打印路由
     for route in app.routes:
         if hasattr(route, "path"):
             print(f"DEBUG: Route: {route.path}")
@@ -37,19 +39,20 @@ origins = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]
-
+# 注册跨域中间件
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=origins, # 允许的源
+    allow_credentials=True,# 允许携带 cookies
+    allow_methods=["*"], # 允许所有方法
+    allow_headers=["*"], # 允许所有头
 )
 
+# 注册全局异常处理器
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    print("GLOBAL EXCEPTION CAUGHT:")
-    traceback.print_exc()
+    print("Global exception caught:")
+    traceback.print_exc() # 打印异常信息
     response = JSONResponse(
         status_code=500,
         content={"detail": str(exc), "traceback": traceback.format_exc()},
@@ -61,8 +64,10 @@ async def global_exception_handler(request: Request, exc: Exception):
     response.headers["Access-Control-Allow-Headers"] = "*"
     return response
 
+# 注册 API 路由
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+# 根路由
 @app.get("/")
 def read_root():
     return {"message": "Welcome to Fin-Genius Backend"}
