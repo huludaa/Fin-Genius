@@ -4,11 +4,6 @@ from datetime import datetime
 
 class PromptTemplateBase(BaseModel):
     template_name: str
-    product_name: Optional[str] = None
-    target_audience: Optional[str] = None
-    channels: Optional[List[str]] = None
-    tone_of_voice: Optional[str] = None
-    core_selling_points: Optional[str] = None
     description: Optional[str] = None
     variables: Optional[List[dict]] = None
     template_content: Optional[str] = None
@@ -19,11 +14,6 @@ class PromptTemplateCreate(PromptTemplateBase):
 
 class PromptTemplateUpdate(PromptTemplateBase):
     template_name: Optional[str] = None
-    product_name: Optional[str] = None
-    target_audience: Optional[str] = None
-    channels: Optional[List[str]] = None
-    tone_of_voice: Optional[str] = None
-    core_selling_points: Optional[str] = None
     description: Optional[str] = None
     variables: Optional[List[dict]] = None
     template_content: Optional[str] = None

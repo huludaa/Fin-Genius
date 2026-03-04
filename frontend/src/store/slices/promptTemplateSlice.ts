@@ -4,11 +4,6 @@ import api from '@/lib/axios';
 interface Template {
     id: number;
     template_name: string;
-    product_name?: string;
-    target_audience?: string;
-    channels?: string[];
-    tone_of_voice?: string;
-    core_selling_points?: string;
     description?: string;
     variables?: any[]; // Complex JSON structure
     template_content?: string;
