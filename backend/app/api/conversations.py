@@ -1,104 +1,70 @@
-from typing import Any, List, Optional
+from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.crud import crud_conversation
 from app.models.user import User
-from pydantic import BaseModel
-from datetime import datetime
+from app.schemas import conversation as conversation_schemas
 import traceback
 
 router = APIRouter()
 
-class MessageBase(BaseModel):
-    role: str
-    content: str
 
-class MessageCreate(MessageBase):
-    pass
-
-class Message(MessageBase):
-    id: int
-    conversation_id: int
-    is_starred: bool = False
-    starred_at: Optional[datetime] = None
-    compliance_result: Optional[str] = None
-    created_at: datetime
-    class Config:
-        from_attributes = True
-
-class ConversationBase(BaseModel):
-    title: str
-    is_starred: bool = False
-
-class ConversationCreate(ConversationBase):
-    pass
-
-class ConversationUpdate(BaseModel):
-    title: Optional[str] = None
-    is_starred: Optional[bool] = None
-
-class ConversationSchema(ConversationBase):
-    id: int
-    user_id: int
-    is_starred: bool = False
-    starred_at: Optional[datetime] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    class Config:
-        from_attributes = True
-
-@router.get("/", response_model=List[ConversationSchema])
+# 获取会话列表
+@router.get("/", response_model=List[conversation_schemas.ConversationSchema])
 def read_conversations(
-    db: Session = Depends(deps.get_db),
-    skip: int = 0,
-    limit: int = 100,
-    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db), # 连接数据库
+    skip: int = 0, # 跳过前多少条
+    limit: int = 100, # 取前多少条
+    current_user: User = Depends(deps.get_current_user), # 获取当前用户
 ) -> Any:
     try:
-        return crud_conversation.get_conversations(db, user_id=current_user.id, skip=skip, limit=limit)
+        return crud_conversation.get_conversations(db, user_id=current_user.id, skip=skip, limit=limit) 
     except Exception as e:
-        print(f"获取会话列表出错: {e}")
+        print(f"Error reading conversation list: {e}")
         raise HTTPException(status_code=500, detail="获取会话列表失败")
 
-@router.post("/", response_model=ConversationSchema)
+# 创建会话
+@router.post("/", response_model=conversation_schemas.ConversationSchema)
 def create_conversation(
     *,
     db: Session = Depends(deps.get_db),
-    conversation_in: ConversationCreate,
+    conversation_in: conversation_schemas.ConversationCreate,
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     try:
         return crud_conversation.create_conversation(db, user_id=current_user.id, title=conversation_in.title)
     except Exception as e:
-        print(f"创建会话出错: {e}")
+        print(f"Error creating conversation: {e}")
         raise HTTPException(status_code=500, detail="创建会话失败")
 
-@router.get("/{id}/messages", response_model=List[Message])
+# 获取会话中的消息
+@router.get("/{id}/messages", response_model=List[conversation_schemas.Message])
 def read_messages(
     id: int,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     conversation = crud_conversation.get_conversation(db, conversation_id=id)
-    if not conversation or conversation.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="未找到该会话")
+    if not conversation or conversation.user_id != current_user.id: # 检查对话所有权
+        raise HTTPException(status_code=404, detail="会话不存在或无权限访问")
     return crud_conversation.get_messages_by_conversation(db, conversation_id=id)
 
-@router.post("/{id}/messages", response_model=Message)
+# 添加消息
+@router.post("/{id}/messages", response_model=conversation_schemas.Message)
 async def add_message(
     id: int,
     *,
     db: Session = Depends(deps.get_db),
-    message_in: MessageCreate,
+    message_in: conversation_schemas.MessageCreate,
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     try:
         conversation = crud_conversation.get_conversation(db, conversation_id=id)
-        if not conversation or conversation.user_id != current_user.id:
-            raise HTTPException(status_code=404, detail="未找到该会话")
+        if not conversation or conversation.user_id != current_user.id: # 检查对话所有权
+            raise HTTPException(status_code=404, detail="会话不存在或无权限访问")
         
-        # 如果这是首条用户消息，使用 AI 自动为对话生成标题
+        # 如果这是首条用户消息，使用 AI 自动为对话生成标题       
         if message_in.role == "user":
             messages = crud_conversation.get_messages_by_conversation(db, conversation_id=id)
             if len(messages) == 0:
@@ -108,26 +74,28 @@ async def add_message(
         
         # 更新对话的最后活跃时间 (updated_at)
         crud_conversation.update_conversation(db, conversation_id=id)
-                
+        # 添加消息
         return crud_conversation.add_message_to_conversation(db, conversation_id=id, role=message_in.role, content=message_in.content)
     except Exception as e:
-        print(f"添加消息出错: {e}")
+        print(f"Error adding message: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="添加消息失败")
 
-@router.patch("/{id}", response_model=ConversationSchema)
+# 更新对话
+@router.patch("/{id}", response_model=conversation_schemas.ConversationSchema)
 def update_conversation(
     id: int,
     *,
     db: Session = Depends(deps.get_db),
-    conversation_in: ConversationUpdate,
+    conversation_in: conversation_schemas.ConversationUpdate,
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     conversation = crud_conversation.get_conversation(db, conversation_id=id)
-    if not conversation or conversation.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="未找到该会话")
+    if not conversation or conversation.user_id != current_user.id: # 检查对话所有权
+        raise HTTPException(status_code=404, detail="会话不存在或无权限访问")
     return crud_conversation.update_conversation(db, conversation_id=id, title=conversation_in.title, is_starred=conversation_in.is_starred)
 
+# 删除对话
 @router.delete("/{id}")
 def delete_conversation(
     id: int,
@@ -135,12 +103,13 @@ def delete_conversation(
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     conversation = crud_conversation.get_conversation(db, conversation_id=id)
-    if not conversation or conversation.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="未找到该会话")
+    if not conversation or conversation.user_id != current_user.id: # 检查对话所有权
+        raise HTTPException(status_code=404, detail="会话不存在或无权限访问")
     crud_conversation.delete_conversation(db, conversation_id=id)
     return {"status": "ok"}
 
-@router.patch("/messages/{message_id}", response_model=Message)
+# 收藏/取消收藏消息
+@router.patch("/messages/{message_id}", response_model=conversation_schemas.Message)
 def toggle_message_star(
     message_id: int,
     *,
@@ -150,7 +119,7 @@ def toggle_message_star(
 ) -> Any:
     """ 局部更新：实现营销内容（单条消息）的一键收藏或取消 """
     message = crud_conversation.get_message(db, message_id=message_id)
-    if not message:
+    if not message: # 检查消息是否存在
         raise HTTPException(status_code=404, detail="消息不存在")
     
     # 检查对话所有权：利用 deps 依赖项确保用户只能收藏属于自己的消息（数据隔离）
@@ -161,7 +130,8 @@ def toggle_message_star(
     # 调用 CRUD 层更新 is_starred 状态位并记录 starred_at 时间
     return crud_conversation.update_message_star(db, message_id=message_id, is_starred=is_starred)
 
-@router.get("/starred-messages", response_model=List[Message])
+# 获取收藏的消息
+@router.get("/starred-messages", response_model=List[conversation_schemas.Message])
 def read_starred_messages(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),

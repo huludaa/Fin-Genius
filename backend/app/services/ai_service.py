@@ -153,8 +153,6 @@ class AIService:
                     max_tokens=20
                 )
                 title = response.choices[0].message.content.strip()
-                if title.lower().startswith("title:"):
-                    title = title[6:].strip()
                 return title[:8]
             except Exception as e:
                 print(f"Error generating title: {e}")

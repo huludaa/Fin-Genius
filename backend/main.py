@@ -4,15 +4,15 @@ from fastapi.responses import JSONResponse
 import traceback
 from app.api.api_v1 import api_router
 from app.core.config import settings
-from app.db.base import Base
+from app.db.meta import Base # 注意：这里引用的是 meta 里的 Base，因为它已经“登记”好了
 from app.db.session import engine
 
 # 导入所有模型以向 Base.metadata 注册
-from app.models.user import User
-from app.models.prompt_template import PromptTemplate
-from app.models.conversation import Conversation, ConversationMessage
+# from app.models.user import User
+# from app.models.prompt_template import PromptTemplate
+# from app.models.conversation import Conversation, ConversationMessage
 
-# 自动创建数据库表
+# 自动创建数据库表（Base 已经在 meta.py 里完成了全模型登记）
 Base.metadata.create_all(bind=engine)
 
 # 创建 FastAPI 应用

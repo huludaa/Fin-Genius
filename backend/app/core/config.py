@@ -20,8 +20,7 @@ class Settings(BaseSettings):
     AI_MODEL_NAME: Optional[str] = None
     
     class Config:
-        # 自动加载 .env 配置文件
-        env_file = ".env"
+        env_file = ".env" # 自动加载 .env 配置文件
         case_sensitive = True # 环境变量区分大小写
 
 # 导出配置实例

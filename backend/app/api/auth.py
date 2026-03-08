@@ -9,7 +9,7 @@ from app.core.config import settings
 from app.crud import crud_user
 from app.schemas import user as user_schemas, token as token_schemas
 
-# 创建身份验证相关的 API 路由器
+# 创建 API 路由器
 router = APIRouter()
 
 @router.post("/token", response_model=token_schemas.Token)

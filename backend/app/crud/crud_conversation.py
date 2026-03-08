@@ -19,17 +19,17 @@ def create_conversation(db: Session, user_id: int, title: str = "New Chat"):
 def update_conversation(db: Session, conversation_id: int, title: Optional[str] = None, is_starred: Optional[bool] = None):
     db_obj = db.query(Conversation).filter(Conversation.id == conversation_id).first()
     if db_obj:
-        if title is not None:
+        if title is not None: # 如果标题不为空，则用传入的标题更新
             db_obj.title = title
-        if is_starred is not None:
+        if is_starred is not None: # 如果收藏状态不为空，则用传入的收藏状态更新
             db_obj.is_starred = is_starred
-            if is_starred:
+            if is_starred: # 如果收藏状态为 True，则更新收藏时间
                 from sqlalchemy.sql import func
                 db_obj.starred_at = func.now()
-            else:
+            else: # 如果收藏状态为 False，则清空收藏时间
                 db_obj.starred_at = None
         from sqlalchemy.sql import func
-        db_obj.updated_at = func.now() # Force update timestamp
+        db_obj.updated_at = func.now()
         db.commit()
         db.refresh(db_obj)
     return db_obj
@@ -59,16 +59,17 @@ def get_message(db: Session, message_id: int):
 
 def update_message_star(db: Session, message_id: int, is_starred: bool):
     db_obj = get_message(db, message_id=message_id)
-    if db_obj:
+    if db_obj: # 如果消息存在
         db_obj.is_starred = is_starred
-        if is_starred:
+        if is_starred: # 如果收藏状态为 True，则更新收藏时间
             from sqlalchemy.sql import func
             db_obj.starred_at = func.now()
-        else:
+        else: # 如果收藏状态为 False，则清空收藏时间
             db_obj.starred_at = None
         db.commit()
         db.refresh(db_obj)
     return db_obj
+
 def get_starred_messages(db: Session, user_id: int):
     return db.query(ConversationMessage).join(Conversation).filter(Conversation.user_id == user_id, ConversationMessage.is_starred == True).all()
 
