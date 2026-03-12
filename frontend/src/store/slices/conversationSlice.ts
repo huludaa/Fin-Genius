@@ -45,7 +45,7 @@ export const fetchConversations = createAsyncThunk(
             const response = await api.get('/conversations/');
             return response.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data?.detail || "Failed to fetch conversations");
+            return rejectWithValue(err.response?.data?.detail || "获取会话列表失败");
         }
     }
 );
@@ -57,7 +57,7 @@ export const createNewConversation = createAsyncThunk(
             const response = await api.post('/conversations/', { title });
             return response.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data?.detail || "Failed to create conversation");
+            return rejectWithValue(err.response?.data?.detail || "创建会话失败");
         }
     }
 );
@@ -69,7 +69,7 @@ export const updateConversation = createAsyncThunk(
             const response = await api.patch(`/conversations/${id}`, { title, is_starred });
             return response.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data?.detail || "Failed to update conversation");
+            return rejectWithValue(err.response?.data?.detail || "更新会话失败");
         }
     }
 );
@@ -81,7 +81,7 @@ export const fetchConversationMessages = createAsyncThunk(
             const response = await api.get(`/conversations/${id}/messages`);
             return { id, messages: response.data };
         } catch (err: any) {
-            return rejectWithValue(err.response?.data?.detail || "Failed to fetch messages");
+            return rejectWithValue(err.response?.data?.detail || "获取会话消息失败");
         }
     }
 );
@@ -93,7 +93,7 @@ export const saveMessage = createAsyncThunk(
             const response = await api.post(`/conversations/${id}/messages`, { role, content });
             return response.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data?.detail || "Failed to save message");
+            return rejectWithValue(err.response?.data?.detail || "消息写入数据库失败");
         }
     }
 );
@@ -105,7 +105,7 @@ export const deleteConversation = createAsyncThunk(
             await api.delete(`/conversations/${id}`);
             return id;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data?.detail || "Failed to delete conversation");
+            return rejectWithValue(err.response?.data?.detail || "删除会话失败");
         }
     }
 );
@@ -117,7 +117,7 @@ export const updateMessageStar = createAsyncThunk(
             const response = await api.patch(`/conversations/messages/${messageId}`, null, { params: { is_starred } });
             return response.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data?.detail || "Failed to update message star status");
+            return rejectWithValue(err.response?.data?.detail || "更新收藏状态失败");
         }
     }
 );
@@ -129,7 +129,7 @@ export const fetchStarredMessages = createAsyncThunk(
             const response = await api.get('/conversations/starred-messages');
             return response.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data?.detail || "Failed to fetch starred messages");
+            return rejectWithValue(err.response?.data?.detail || "获取收藏消息失败");
         }
     }
 );
@@ -166,7 +166,7 @@ const conversationSlice = createSlice({
                 state.error = action.payload as string;
             })
             .addCase(createNewConversation.fulfilled, (state, action) => {
-                state.conversations.unshift(action.payload);
+                state.conversations.unshift(action.payload); //unshift:把新元素插到数组的最前面
                 state.currentConversationId = action.payload.id;
                 state.currentMessages = [];
             })
@@ -175,8 +175,8 @@ const conversationSlice = createSlice({
                 state.currentConversationId = action.payload.id;
             })
             .addCase(updateConversation.fulfilled, (state, action) => {
-                const index = state.conversations.findIndex(c => c.id === action.payload.id);
-                if (index !== -1) {
+                const index = state.conversations.findIndex(c => c.id === action.payload.id); //findIndex:找到第一个满足条件的元素的索引
+                if (index !== -1) { // 找到了。因为索引值最小为0，所以index !== -1等价于找到了
                     state.conversations[index] = action.payload;
                 }
             })
@@ -189,11 +189,12 @@ const conversationSlice = createSlice({
                 const conv = state.conversations.find(c => c.id === action.payload.conversation_id);
                 if (conv) {
                     conv.updated_at = new Date().toISOString();
-                    // 如果是第一条消息，后端已经更新了对应标题，但我们可能需要在此刷新列表状态
                 }
             })
             .addCase(deleteConversation.fulfilled, (state, action) => {
+                // 把删除的对话从前端历史对话列表中过滤出去
                 state.conversations = state.conversations.filter(c => c.id !== action.payload);
+                // 如果当前对话是删除的对话，重置当前对话状态
                 if (state.currentConversationId === action.payload) {
                     state.currentConversationId = null;
                     state.currentMessages = [];

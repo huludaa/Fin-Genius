@@ -1,5 +1,6 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import api from '@/lib/axios';
+import { updateMessageStar } from './conversationSlice';
 
 interface Message {
     id?: number;
@@ -21,66 +22,56 @@ const initialState: ChatState = {
     status: 'idle',
 };
 
-// Start generation (initial request)
-export const sendMessage = createAsyncThunk(
-    'chat/sendMessage',
-    async ({ prompt, history }: { prompt: string; history: Message[] }, { dispatch, rejectWithValue }) => {
-        try {
-            // Filter history to only valid chat messages
-            const validHistory = history.filter(m => m.type === 'text' && (m.role === 'user' || m.role === 'assistant'));
-
-            // Clean history payload
-            const payloadHistory = validHistory.map(m => ({ role: m.role, content: m.content }));
-
-            const response = await api.post('/ai/generate-content', { prompt, history: payloadHistory }, { responseType: 'text' });
-            return response.data;
-        } catch (err: any) {
-            console.error("Chat API Error:", err);
-            // Better error extraction
-            const errorMessage = err.response?.data?.detail || err.message || "Unknown error";
-            return rejectWithValue(errorMessage);
-        }
-    }
-);
-
 const chatSlice = createSlice({
     name: 'chat',
     initialState,
     reducers: {
+        // 清空消息，新对话或者切换对话时调用
+        clearMessages: (state) => {
+            state.messages = [];
+            state.status = 'idle';
+        },
+        // 设置等待状态，控制“AI正在思考”的加载动画状态
+        setLoading: (state, action: PayloadAction<boolean>) => {
+            state.status = action.payload ? 'generating' : 'idle';
+        },
+        // 添加消息，把用户发出的消息和AI发出的消息都加到消息列表中
         addMessage: (state, action: PayloadAction<Message>) => {
             state.messages.push(action.payload);
         },
-        updateLastMessage: (state, action: PayloadAction<string>) => {
-            if (state.messages.length > 0) {
-                state.messages[state.messages.length - 1].content = action.payload;
-            }
-        },
-        // Streaming actions
+        // 流式生成，AI准备说话开启打字机效果
         startStreaming: (state, action: PayloadAction<string | undefined>) => {
             state.status = 'streaming';
-            // Add initial message with chunk if provided
+            // 添加初始消息
             state.messages.push({
                 role: 'assistant',
                 content: action.payload || '',
                 type: 'text'
             });
         },
+        // 追加字符，每吐出一个字符追加到最后一条消息
         appendToLastMessage: (state, action: PayloadAction<string>) => {
             if (state.messages.length > 0) {
                 const lastMsg = state.messages[state.messages.length - 1];
                 if (lastMsg.role === 'assistant') {
                     lastMsg.content += action.payload;
-                    state.status = 'streaming'; // Ensure status is streaming if we get chunks
+                    state.status = 'streaming'; // 确保状态为流式生成
                 }
             }
         },
-        updateLastMessageId: (state, action: PayloadAction<number>) => {
+        // 更新最后一条消息，用于一次性覆盖最后一条消息的内容（由于流式生成时，最后一条消息的内容可能不完整）
+        updateLastMessage: (state, action: PayloadAction<string>) => {
             if (state.messages.length > 0) {
-                state.messages[state.messages.length - 1].id = action.payload;
+                state.messages[state.messages.length - 1].content = action.payload;
             }
         },
+        // AI说完话，关闭打字机效果
+        endStreaming: (state) => {
+            state.status = 'idle';
+        },
+        // 更新用户消息的id
         updateUserMessageId: (state, action: PayloadAction<{ content: string; id: number }>) => {
-            // Find the last user message matching the content or just the last user message
+            // 找到最后一个用户消息
             for (let i = state.messages.length - 1; i >= 0; i--) {
                 if (state.messages[i].role === 'user' && state.messages[i].content === action.payload.content) {
                     state.messages[i].id = action.payload.id;
@@ -88,17 +79,27 @@ const chatSlice = createSlice({
                 }
             }
         },
-        updateMessageStarStatus: (state, action: PayloadAction<{ id: number, is_starred: boolean }>) => {
-            const msg = state.messages.find(m => m.id === action.payload.id);
-            if (msg) {
-                msg.is_starred = action.payload.is_starred;
+        // 更新最后一条消息的id
+        updateLastMessageId: (state, action: PayloadAction<number>) => {
+            if (state.messages.length > 0) {
+                state.messages[state.messages.length - 1].id = action.payload;
             }
         },
-        endStreaming: (state) => {
-            state.status = 'idle';
+
+        // 更新消息的合规性检查状态
+        updateComplianceStatus: (state, action: PayloadAction<{ id?: number, status: 'pending' | 'completed' | 'none' }>) => {
+            // 如果提供了id，按id查找，否则更新最后一个助手消息
+            if (action.payload.id) {
+                const msg = state.messages.find(m => m.id === action.payload.id);
+                if (msg) msg.compliance_status = action.payload.status;
+            } else {
+                const lastAssistant = [...state.messages].reverse().find(m => m.role === 'assistant');
+                if (lastAssistant) lastAssistant.compliance_status = action.payload.status;
+            }
         },
+        // 更新消息合规性检查结果
         updateMessageCompliance: (state, action: PayloadAction<{ id?: number, compliance_result: string }>) => {
-            // If id is provided, find by id, otherwise update last assistant message
+            // 如果提供了id，按id查找，否则更新最后一个助手消息
             if (action.payload.id) {
                 const msg = state.messages.find(m => m.id === action.payload.id);
                 if (msg) {
@@ -113,26 +114,10 @@ const chatSlice = createSlice({
                 }
             }
         },
-        updateComplianceStatus: (state, action: PayloadAction<{ id?: number, status: 'pending' | 'completed' | 'none' }>) => {
-            if (action.payload.id) {
-                const msg = state.messages.find(m => m.id === action.payload.id);
-                if (msg) msg.compliance_status = action.payload.status;
-            } else {
-                const lastAssistant = [...state.messages].reverse().find(m => m.role === 'assistant');
-                if (lastAssistant) lastAssistant.compliance_status = action.payload.status;
-            }
-        },
-        setLoading: (state, action: PayloadAction<boolean>) => {
-            state.status = action.payload ? 'generating' : 'idle';
-        },
-        clearMessages: (state) => {
-            state.messages = [];
-            state.status = 'idle';
-        }
     },
     extraReducers: (builder) => {
-        // Handle message star update from conversationSlice
-        builder.addCase('conversations/updateMessageStar/fulfilled', (state: any, action: any) => {
+        // 处理消息星标更新（确保聊天界面消息的星标状态与后端一致）
+        builder.addCase(updateMessageStar.fulfilled, (state: any, action: any) => {
             const msg = state.messages.find((m: any) => m.id === action.payload.id);
             if (msg) {
                 msg.is_starred = action.payload.is_starred;
@@ -146,7 +131,6 @@ export const {
     updateLastMessage,
     updateLastMessageId,
     updateUserMessageId,
-    updateMessageStarStatus,
     setLoading,
     clearMessages,
     startStreaming,

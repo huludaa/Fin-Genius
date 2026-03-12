@@ -5,7 +5,7 @@ interface Template {
     id: number;
     template_name: string;
     description?: string;
-    variables?: any[]; // Complex JSON structure
+    variables?: any[]; // 复杂 JSON 结构
     template_content?: string;
     owner_id: number;
     is_official: boolean;

@@ -24,11 +24,11 @@ const initialState: AuthState = {
 
 export const loginUser = createAsyncThunk(
     'auth/loginUser',
-    async (credentials: any, { rejectWithValue }) => {
+    async (credentials: any, { rejectWithValue }) => { // {rejectWithValue}用于把后端的报错信息（比如“密码太短”）传回给前台
         try {
             const response = await api.post('/auth/token', credentials, {
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
+                    'Content-Type': 'application/x-www-form-urlencoded' // 表单数据提交格式，是浏览器原生表单默认的编码方式。
                 }
             });
             localStorage.setItem('token', response.data.access_token);
@@ -53,7 +53,7 @@ export const registerUser = createAsyncThunk(
 
 export const fetchUser = createAsyncThunk(
     'auth/fetchUser',
-    async (_, { rejectWithValue }) => {
+    async (_, { rejectWithValue }) => { // _ 表示不使用第一个参数
         try {
             const response = await api.get('/users/me');
             return response.data;
@@ -66,6 +66,7 @@ export const fetchUser = createAsyncThunk(
 const authSlice = createSlice({
     name: 'auth',
     initialState,
+    // 处理同步、简单的内部事务
     reducers: {
         logout: (state) => {
             state.user = null;
@@ -73,6 +74,7 @@ const authSlice = createSlice({
             if (typeof window !== 'undefined') localStorage.removeItem('token');
         },
     },
+    // 处理上面定义的那些 createAsyncThunk 的异步逻辑
     extraReducers: (builder) => {
         builder
             .addCase(loginUser.pending, (state) => {
@@ -84,7 +86,7 @@ const authSlice = createSlice({
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.status = 'failed';
-                state.error = action.payload as string;
+                state.error = (action.payload as any)?.detail || '登录失败，请稍后重试';
             })
             .addCase(fetchUser.fulfilled, (state, action) => {
                 state.user = action.payload;
@@ -95,7 +97,7 @@ const authSlice = createSlice({
             })
             .addCase(fetchUser.rejected, (state, action) => {
                 state.status = 'failed';
-                state.error = (action.payload as any)?.detail || 'Authentication failed';
+                state.error = (action.payload as any)?.detail || '授权失败';
                 // 如果获取用户信息失败（如 token 过期或服务器宕机），可能需要在此清除 token
                 // state.token = null;
                 // localStorage.removeItem('token');

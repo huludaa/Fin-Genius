@@ -114,6 +114,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                         try {
                             await dispatch(deleteConversation(conv.id)).unwrap();
                             message.success('对话删除成功');
+
+                            // 如果删除的是当前正在查看的对话，跳转回新对话页面
+                            if (router.query.id === String(conv.id)) {
+                                router.push('/chat');
+                            }
                         } catch (err) {
                             message.error('删除失败');
                         }
