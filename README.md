@@ -17,7 +17,7 @@
 ## 技术栈 🛠️
 
 ### 前端 (Next.js 14)
-- **框架**: [Next.js](https://nextjs.org/) (App Router & TypeScript)
+- **框架**: [Next.js](https://nextjs.org/) (Pages Router & TypeScript)
 - **UI 组件**: [Ant Design 5](https://ant.design/)
 - **状态管理**: [Redux Toolkit](https://redux-toolkit.js.org/)
 - **网络**: Axios + React Markdown (流式输出渲染)
@@ -78,14 +78,20 @@
 │   ├── app/
 │   │   ├── api/        # 接口路由 (AI, Auth, Conversations)
 │   │   ├── core/       # 配置与全局常量
+│   │   ├── crud/       # 数据库增删改查逻辑
+│   │   ├── db/         # 数据库连接与配置
 │   │   ├── models/     # 数据库 SQL 模型
+│   │   ├── schemas/    # Pydantic 数据验证模型
 │   │   └── services/   # 核心业务 (AI 生成、合规审计、文件解析)
 │   └── main.py         # 系统入口
 ├── frontend/           # Next.js 前端源代码
 │   ├── src/
 │   │   ├── components/ # 基础组件 (Chat, Auth, Prompts)
-│   │   ├── store/      # Redux 状态管理
-│   │   └── pages/      # 业务页面
+│   │   ├── lib/        # 库配置 (Axios 拦截器等)
+│   │   ├── store/      # Redux 状态管理 (Slices)
+│   │   ├── pages/      # 业务页面 (Pages Router)
+│   │   ├── styles/     # 全局 CSS 样式
+│   │   └── theme/      # Ant Design 主题配置
 └── README.md           # 本文档
 ```
 
