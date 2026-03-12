@@ -13,5 +13,5 @@ export const store = configureStore({
     },
 });
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+export type RootState = ReturnType<typeof store.getState>; // 自动推导出整个 Redux 仓库的状态类型
+export type AppDispatch = typeof store.dispatch; // 自动推导出 Redux Dispatch 的类型
