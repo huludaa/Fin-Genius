@@ -1,59 +1,27 @@
-# Dependencies
+# 1. 依赖与运行环境
 node_modules/
 venv/
 .venv/
-env/
-ENV/
-
-# Next.js
-.next/
-out/
-
-# Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
 
-# Env files (CRITICAL: Do not commit secrets)
+# 2. Next.js 编译产物
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# 3. 环境变量与私密信息
 .env
 .env.*
-!.env.example
 
-# Database
+# 4. 数据库与本地日志
 *.db
 *.sqlite3
-
-# Logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# OS / IDE
+# 5. 系统与编辑器配置
 .DS_Store
 .vscode/
 .idea/
 *.swp
-*.swo
-
-# Misc
-.vercel
-*.tsbuildinfo
-next-env.d.ts
