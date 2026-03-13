@@ -26,7 +26,7 @@ const chatSlice = createSlice({
     name: 'chat',
     initialState,
     reducers: {
-        // 清空消息，新对话或者切换对话时调用
+        // 清空消息，新对话或者切换对话时调用。清理 “前台”（也就是正在蹦字、流式生成的那些气泡）
         clearMessages: (state) => {
             state.messages = [];
             state.status = 'idle';
@@ -71,7 +71,7 @@ const chatSlice = createSlice({
         },
         // 更新用户消息的id
         updateUserMessageId: (state, action: PayloadAction<{ content: string; id: number }>) => {
-            // 找到最后一个用户消息
+            // 找到最后一个“用户消息”
             for (let i = state.messages.length - 1; i >= 0; i--) {
                 if (state.messages[i].role === 'user' && state.messages[i].content === action.payload.content) {
                     state.messages[i].id = action.payload.id;

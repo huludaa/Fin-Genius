@@ -4,7 +4,6 @@ import { UserOutlined, RobotOutlined, StarOutlined, StarFilled, CopyOutlined, Ch
 import ReactMarkdown from 'react-markdown';
 import { useAppDispatch } from '@/store/hooks';
 import { updateMessageStar } from '@/store/slices/conversationSlice';
-import api from '@/lib/axios';
 
 interface MessageProps {
     id?: number;

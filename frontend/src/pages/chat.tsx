@@ -31,7 +31,6 @@ const Chat = () => {
     (state) => state.conversations,
   );
 
-  // Manage active template state locally for the UI
   const [activeTemplate, setActiveTemplate] = useState<any>(null);
   const [templateVariables, setTemplateVariables] = useState<
     Record<string, string>
@@ -39,33 +38,40 @@ const Chat = () => {
   const [isConfigVisible, setIsConfigVisible] = useState(true);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const prevQueryId = useRef<string | null>(null);
+  const prevQueryId = useRef<string | null>(null); // 用于记录上一个对话 ID
 
   // 1. 监听 URL 变化以加载对话记录
   useEffect(() => {
-    if (!router.isReady) return;
-    const queryId = router.query.id as string;
+    if (!router.isReady) return; // 确保 Next.js 路由已经准备好
+    const queryId = router.query.id as string; // 获取 URL 中的 id 参数
     const parsedQueryId = queryId ? parseInt(queryId) : null;
 
-    // 当对话 ID 发生变化时
+    // 当对话 ID 发生变化时（可能是切换对话，也可能是新建对话后的自动跳转）
     if (queryId !== prevQueryId.current) {
-      // 优化：识别是否是刚从“新对话”发送消息产生的跳转
+      /**
+       * 核心优化：判断是否为“新建对话后的自动跳转”
+       * True 的条件：之前没有 ID + 现在有 ID + ID 与 Store 记录一致 + 屏幕上已经有实时消息
+       * 核心逻辑原因：当 isJustCreated 为 true 的时，不需要重新加载对话记录，因为消息已经实时显示在屏幕上了
+      */
       const isJustCreated = !prevQueryId.current && parsedQueryId === currentConversationId && messages.length > 0;
 
+      // 如果不是刚新建的（即：用户是从列表点开“旧对话”或者刷新页面）
       if (!isJustCreated) {
-        // 重要：立即清空本地显示的消息和 Store 中存储的数据库消息，防止看到上一个对话的内容
-        dispatch(clearMessages());
+        // 先清空当前屏幕的消息气泡和数据库快照，防止看到上一个对话的“残影”
+        dispatch(clearMessages()); // 【前台】清空
+        dispatch(clearCurrentMessages()); // 【后台】清空
+
+        // 设置当前对话 ID（兜底：确保 Store 里的 ID 始终与 URL 同步）
         dispatch(setCurrentConversationId(parsedQueryId));
-        // 这里需要一个 clearCurrentMessages 的 action，确保数据库缓存也清空
-        dispatch(clearCurrentMessages());
 
         setActiveTemplate(null);
         setTemplateVariables({});
       }
 
+      // 更新记忆：把当前的 ID 存入 Ref，留给下一次 URL 变化时对比
       prevQueryId.current = queryId;
 
-      // 如果有具体的对话 ID 且不是刚创建的，则立即加载后端消息
+      // 只有在“非新建”的情况下，才需要去后端拉取该对话的历史聊天记录
       if (parsedQueryId && !isJustCreated) {
         dispatch(fetchConversationMessages(parsedQueryId));
       }
@@ -82,7 +88,7 @@ const Chat = () => {
 
   useEffect(() => {
     const queryId = router.query.id as string;
-    const normalizedQueryId = queryId ? parseInt(queryId) : null;
+    const normalizedQueryId = queryId ? parseInt(queryId) : null; // 规范化的查询 ID
 
     // 当数据库消息加载完成，且当前 URL ID 与加载的 ID 匹配时
     if (
@@ -147,10 +153,10 @@ const Chat = () => {
 
   // 处理从收藏夹跳转过来时的消息定位和高亮
   useEffect(() => {
-    const hash = window.location.hash;
+    const hash = window.location.hash; // 获取 URL 中的哈希值（#msg-123）
     if (hash && hash.startsWith("#msg-")) {
       const timer = setTimeout(() => {
-        const element = document.getElementById(hash.substring(1));
+        const element = document.getElementById(hash.substring(1)); // 字符串.substring(起始索引, 结束索引)，从指定位置截取一段新字符串，不修改原字符串
         if (element) {
           // 平滑滚动到屏幕中央
           element.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -174,7 +180,7 @@ const Chat = () => {
         height: "100%",
         width: "100%",
         background: "#fff",
-        overflow: "hidden",
+        overflow: "hidden", // 隐藏滚动条
       }}
     >
       {/* 左侧聊天区域 */}
@@ -260,7 +266,7 @@ const Chat = () => {
               >
                 金融营销助手已准备就绪
                 <br />
-                请通过下方输入框开始对话，或从历史记录中选择
+                请通过下方输入框开始对话，或从对话历史中选择
               </p>
             </div>
           ) : (

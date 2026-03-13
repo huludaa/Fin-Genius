@@ -141,6 +141,7 @@ const conversationSlice = createSlice({
         setCurrentConversationId: (state, action: PayloadAction<number | null>) => {
             state.currentConversationId = action.payload;
         },
+        // 清理 “后台”（也就是从数据库里拉回来的历史快照）
         clearCurrentMessages: (state) => {
             state.currentMessages = [];
         },

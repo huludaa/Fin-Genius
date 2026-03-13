@@ -54,7 +54,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
         // 如果是新选中的文件且尚未解析
         if (file.status !== 'removed' && !file.parsedContent) {
             const uid = file.uid;
-            setParsingFiles(prev => ({ ...prev, [uid]: true }));
+            setParsingFiles(prev => ({ ...prev, [uid]: true })); // [uid]把当前uid的内容拿出来，当作对象的键名。true表示正在解析。
 
             try {
                 const formData = new FormData();
@@ -84,12 +84,15 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
         }
 
         // 检查是否有文件正在解析中
+        // Object.values() 方法返回一个数组，包含对象中所有可枚举属性的值。
+        // some() 方法测试数组中是否至少有一个元素通过了由提供的函数实现的测试。
         const isParsing = Object.values(parsingFiles).some(v => v);
         if (isParsing) {
             antdMessage.loading("正在解析文档，请稍候...");
             return;
         }
 
+        // 没有输入，没有模板，没有文件，直接返回
         if (!prompt.trim() && !activeTemplate && fileList.length === 0) return;
 
         const token = localStorage.getItem('token');
@@ -113,7 +116,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
         if (activeTemplate && activeTemplate.template_content) {
             let content = activeTemplate.template_content;
             let variableContext = "";
-            const missingRequired: string[] = [];
+            const missingRequired: string[] = []; // 存储必填项名称的数组
 
             if (templateVariables) {
                 activeTemplate.variables?.forEach((v: any) => {
@@ -125,7 +128,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                         // 捕捉描述信息以增强 AI 背景上下文
                         const optionDesc = v.options?.find((opt: any) => opt.value === value)?.description;
                         if (v.description || optionDesc) {
-                            variableContext += `\n- ${v.label || v.name}: ${value}${v.description ? ` (${v.description})` : ""}${optionDesc ? ` -> 含义说明: ${optionDesc}` : ""}`;
+                            variableContext += `\n- ${v.label || v.name}${v.description ? ` (${v.description})` : ""}: ${value}${optionDesc ? ` -> 含义说明: ${optionDesc}` : ""}`;
                         }
                     } else if (v.required) {
                         missingRequired.push(v.label || v.name);
@@ -155,7 +158,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
         let displayContent = prompt;
         if (fileList.length > 0) {
             const fileNames = fileList.map(f => `[${f.name}]`).join(' ');
-            displayContent = (prompt ? `${prompt}\n\n` : "") + `📎 附带文档: ${fileNames}`;
+            displayContent = (prompt ? `${prompt}\n\n` : "") + `附带文档: ${fileNames}`;
         }
 
         if (!displayContent && activeTemplate) {
@@ -170,17 +173,17 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
         dispatch(addMessage({ role: 'user', content: displayContent, type: 'text' }));
         dispatch(setLoading(true));
 
-        let effectiveId = currentConversationId;
-        const queryId = router.query.id as string;
-        if (!effectiveId && queryId) effectiveId = parseInt(queryId);
+        let effectiveId = currentConversationId; // 获取当前对话ID
+        const queryId = router.query.id as string; // 获取URL中的对话ID
+        if (!effectiveId && queryId) effectiveId = parseInt(queryId); // 
 
+        // 如果没有对话ID，说明在“新对话”页面
         if (!effectiveId) {
-            const title = displayContent.substring(0, 30);
-            const newConvAction: any = await dispatch(createNewConversation(title));
-            effectiveId = newConvAction.payload?.id;
+            const newConvAction: any = await dispatch(createNewConversation("新对话")); // 创建新对话
+            effectiveId = newConvAction.payload?.id; // 获取新对话的ID
             if (effectiveId) {
-                dispatch(setCurrentConversationId(effectiveId));
-                router.replace(`/chat?id=${effectiveId}`, undefined, { shallow: true });
+                dispatch(setCurrentConversationId(effectiveId)); // 设置当前对话ID
+                router.replace(`/chat?id=${effectiveId}`, undefined, { shallow: true }); // 更新URL
             }
         }
 
@@ -190,17 +193,25 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
             return;
         }
 
-        // 立即保存用户消息以获取 ID，从而实时启用复制/收藏功能
-        const saveUserResult: any = await dispatch(saveMessage({ id: effectiveId, role: 'user', content: displayContent }));
-        if (saveUserResult?.payload?.id) {
+        // 立即保存用户消息到相对应的对话中，以获取消息的ID，从而实时启用复制/收藏功能
+        const saveUserResult: any = await dispatch(saveMessage({ id: effectiveId, role: 'user', content: displayContent })); // 这里的id是对话ID
+        if (saveUserResult?.payload?.id) { // 如果保存成功，更新用户消息的ID
             dispatch(updateUserMessageId({ content: displayContent, id: saveUserResult.payload.id }));
         }
 
+        /*new AbortController()
+        浏览器提供的原生对象，专门用来手动中断 fetch 请求、异步任务。
+        它自带两个核心东西：
+        controller.signal：中断信号（传给异步任务，监听中断指令）
+        controller.abort()：中断方法（手动调用，立刻终止任务） */
         const controller = new AbortController();
+
+        /* abortControllerRef 是 useRef() 创建的引用
+        把控制器存到 ref 里，是为了在组件的任何地方（清理函数、点击事件、其他函数）都能拿到这个实例，随时调用 abort() 终止操作。 */
         abortControllerRef.current = controller;
 
         let fullResponse = "";
-        let isFirstStore = true;
+        let isFirstStore = true; // 是否是第一次存储
 
         try {
             const validHistory = messages.filter(m => m.type === 'text' && (m.role === 'user' || m.role === 'assistant'));
@@ -224,19 +235,19 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                 throw new Error(errorData.detail || "SERVICE_ERROR");
             }
 
-            const reader = response.body!.getReader();
-            const decoder = new TextDecoder();
+            const reader = response.body!.getReader(); // 获取响应体，getReader()返回一个Reader对象，用于流式读取
+            const decoder = new TextDecoder(); // 创建文本解码器
 
             while (true) {
-                const { value, done } = await reader.read();
-                if (done) break;
-                const chunk = decoder.decode(value, { stream: true });
+                const { value, done } = await reader.read(); // 读取响应体
+                if (done) break; // 如果读取完成，退出循环
+                const chunk = decoder.decode(value, { stream: true }); // 解码响应体
 
                 if (isFirstStore) {
-                    dispatch(startStreaming(chunk));
+                    dispatch(startStreaming(chunk)); // 开始流式传输
                     isFirstStore = false;
                 } else {
-                    dispatch(appendToLastMessage(chunk));
+                    dispatch(appendToLastMessage(chunk)); // 追加到最后一条消息
                 }
                 fullResponse += chunk;
             }
@@ -265,7 +276,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                     dispatch(updateComplianceStatus({ id: assistantId, status: 'completed' }));
                 }
             }
-            dispatch(fetchConversations());
+            dispatch(fetchConversations()); // 刷新对话列表，更新对话顺序
 
         } catch (err: any) {
             if (err.name === 'AbortError') {
