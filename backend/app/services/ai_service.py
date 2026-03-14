@@ -74,11 +74,8 @@ class AIService:
             except Exception as e:
                 yield f"Error calling AI API: {str(e)}"
         else:
-            # 模拟/兜底逻辑
-            full_text = f"已模拟 AI 回复: {prompt}。（请在 .env 中配置 AI_API_KEY 以对接大模型）\n\n"
-            full_text += "根据您的输入，以下是结构化建议：\n"
-            full_text += "- 建议 1: 与金融方案的相关性。\n"
-            full_text += "- 建议 2: 市场反馈趋势。\n"
+            # 兜底逻辑
+            full_text = f"请在 .env 中配置 AI_API_KEY 以对接大模型"
             
             for word in full_text.split(" "): #分割空格是为了模拟流式输出一块块吐
                  yield f"{word} "

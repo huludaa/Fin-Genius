@@ -502,34 +502,6 @@ const Chat = () => {
                   </div>
                 );
               })}
-
-              <div
-                style={{
-                  background: "#fffbe6",
-                  border: "1px solid #ffe58f",
-                  padding: "16px",
-                  borderRadius: "12px",
-                  marginTop: 32,
-                  display: "flex",
-                  gap: 12,
-                }}
-              >
-                <span style={{ fontSize: "18px" }}>⚠️</span>
-                <div>
-                  <div
-                    style={{
-                      fontWeight: 600,
-                      fontSize: "14px",
-                      marginBottom: 4,
-                    }}
-                  >
-                    提示
-                  </div>
-                  <div style={{ fontSize: "12px", color: "#856404" }}>
-                    当前处于模板模式。请在左侧输入框内填写具体需求（如：产品细节、特定场景等），随后点击发送按钮以开始生成
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div style={{ padding: "24px", borderTop: "1px solid #f0f0f0" }}>
