@@ -18,7 +18,9 @@ const Favorites = () => {
     const [searchText, setSearchText] = useState('');
 
     useEffect(() => {
-        dispatch(fetchConversations());
+        if (conversations.length === 0) {
+            dispatch(fetchConversations());
+        }
         dispatch(fetchStarredMessages());
     }, [dispatch]);
 
@@ -31,7 +33,7 @@ const Favorites = () => {
     );
 
     const sortedStarredMessages = [...starredMessages]
-        .sort((a, b) => new Date(b.starred_at || b.created_at).getTime() - new Date(a.starred_at || a.created_at).getTime());
+        .sort((a, b) => new Date(b.starred_at || b.created_at).getTime() - new Date(a.starred_at || a.created_at).getTime()); // sort((a, b) => b - a)，“b - a”：代表 降序排列。
 
     const filteredMessages = sortedStarredMessages.filter(msg => {
         const conv = conversations.find(c => c.id === msg.conversation_id);

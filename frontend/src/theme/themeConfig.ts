@@ -3,7 +3,7 @@ import type { ThemeConfig } from 'antd';
 const theme: ThemeConfig = {
     token: {
         fontSize: 16,
-        colorPrimary: '#2563EB', // Reverted to professional Blue
+        colorPrimary: '#2563EB',
         colorLink: '#2563EB',
         borderRadius: 6,
         wireframe: false,

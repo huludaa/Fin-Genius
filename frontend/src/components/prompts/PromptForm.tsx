@@ -43,7 +43,7 @@ const PromptForm: React.FC<PromptFormProps> = ({
 
     const onFinish = async (values: any) => {
         try {
-            // Validate variables
+            // 验证变量
             if (variables.length > 0) {
                 for (let i = 0; i < variables.length; i++) {
                     const v = variables[i];
@@ -152,25 +152,29 @@ const PromptForm: React.FC<PromptFormProps> = ({
                                     size="small"
                                     disabled={!v.name}
                                     onClick={() => {
-                                        const textArea = textareaRef.current?.resizableTextArea?.textArea;
+                                        const textArea = textareaRef.current?.resizableTextArea?.textArea; // React + UI 组件库（AntD 等）中，安全获取原生文本域 DOM
                                         const currentContent = form.getFieldValue('template_content') || '';
                                         const variableTag = `{${v.name}}`;
 
                                         if (textArea) {
-                                            const start = textArea.selectionStart;
-                                            const end = textArea.selectionEnd;
-                                            const newContent = currentContent.substring(0, start) + variableTag + currentContent.substring(end);
+                                            const start = textArea.selectionStart; // 获取文本框内当前选中文字的【起始光标位置】。
+                                            const end = textArea.selectionEnd; // 获取文本框内当前选中文字的【结束光标位置】。
+                                            const newContent = currentContent.substring(0, start) + variableTag + currentContent.substring(end); // 在当前选中文字的【起始光标位置】前插入变量标签。
 
                                             form.setFieldsValue({
                                                 template_content: newContent
                                             });
 
-                                            // Set cursor position after the tag after re-rendering
+                                            /* 
+                                            强制让文本框在当前所有同步代码执行完毕、DOM 渲染完成后，再执行聚焦和光标定位操作。
+                                            */
                                             setTimeout(() => {
-                                                textArea.focus();
-                                                textArea.setSelectionRange(start + variableTag.length, start + variableTag.length);
+                                                textArea.focus(); // 让文本框获得焦点。
+                                                textArea.setSelectionRange(start + variableTag.length, start + variableTag.length); // 将光标定位到变量标签的后面。
                                             }, 0);
-                                        } else {
+                                        }
+                                        // 如果拿不到 textArea，代码就不知道“用户光标在哪”，就直接把 {变量名} 接在当前所有文字的最末尾。
+                                        else {
                                             form.setFieldsValue({
                                                 template_content: currentContent + variableTag
                                             });
@@ -178,7 +182,7 @@ const PromptForm: React.FC<PromptFormProps> = ({
                                     }}
                                     style={{ borderRadius: '6px', fontSize: '12px' }}
                                 >
-                                    {v.label || v.name || `变量${i + 1}`}
+                                    {v.label || `变量${i + 1}`}
                                 </Button>
                             ))}
                             {variables.length === 0 && <Text type="secondary" style={{ fontSize: '12px' }}>请先在上方定义变量</Text>}

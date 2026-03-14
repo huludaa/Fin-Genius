@@ -36,7 +36,7 @@ const VariableDefinition: React.FC<VariableDefinitionProps> = ({ variables, onCh
     const addOption = (varIndex: number) => {
         const newVars = [...variables];
         const v = { ...newVars[varIndex] };
-        v.options = [...(v.options || []), { value: '' }];
+        v.options = [...(v.options || []), { value: '' }]; // 添加一个默认的空选项
         newVars[varIndex] = v;
         onChange(newVars);
     };
@@ -88,7 +88,7 @@ const VariableDefinition: React.FC<VariableDefinitionProps> = ({ variables, onCh
                                 value={variable.name}
                                 status={variable.name && !/^[a-zA-Z0-9_]+$/.test(variable.name) ? 'error' : ''}
                                 onChange={e => {
-                                    const val = e.target.value.replace(/[^a-zA-Z0-9_]/g, '');
+                                    const val = e.target.value.replace(/[^a-zA-Z0-9_]/g, ''); // replace(/[^a-zA-Z0-9_]/g, '')：把所有非字母、数字和下划线的字符替换为空字符串
                                     updateVariable(varIdx, { name: val });
                                 }}
                                 disabled={readOnly}

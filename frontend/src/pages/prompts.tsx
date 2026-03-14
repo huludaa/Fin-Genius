@@ -58,7 +58,9 @@ const Prompts = () => {
     };
 
     const filteredTemplates = templates.filter(t => {
+        // 官方库和我的工作区分类
         const matchesTab = activeTab === 'official' ? t.is_official : t.owner_id == user?.id;
+        // 搜索模板名称或描述
         const matchesSearch = t.template_name.toLowerCase().includes(searchText.toLowerCase()) ||
             (t.description?.toLowerCase().includes(searchText.toLowerCase()) || false);
         return matchesTab && matchesSearch;
@@ -155,14 +157,14 @@ const Prompts = () => {
                             },
                         },
                     ]}
-                    dataSource={filteredTemplates}
+                    dataSource={filteredTemplates} // 数据源
                     rowKey="id"
                     loading={status === 'loading'}
                     pagination={{ pageSize: 10, position: ['bottomRight'] }}
                 />
             </Card>
 
-            {/* Creation/Edit Modal */}
+            {/* 创建和编辑模板的弹窗 */}
             <Modal
                 title={null}
                 open={isModalOpen}
@@ -172,6 +174,7 @@ const Prompts = () => {
                 width={800}
                 bodyStyle={{ padding: 0 }}
                 style={{ top: 20 }}
+                maskClosable={false} // 点击遮罩层不关闭弹窗
             >
                 <div style={{ padding: '24px 24px 0 24px' }}>
                     <PromptForm
@@ -186,7 +189,7 @@ const Prompts = () => {
                 </div>
             </Modal>
 
-            {/* View Modal */}
+            {/* 查看模板的弹窗 */}
             <Modal
                 title={null}
                 open={isViewModalOpen}
@@ -196,6 +199,7 @@ const Prompts = () => {
                 width={800}
                 bodyStyle={{ padding: 0 }}
                 style={{ top: 20 }}
+                maskClosable={false} // 点击遮罩层不关闭弹窗
             >
                 <div style={{ padding: '24px 24px 0 24px' }}>
                     <PromptForm

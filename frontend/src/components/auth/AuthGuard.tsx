@@ -10,7 +10,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
     const dispatch = useAppDispatch();
     const { user, status, error } = useAppSelector((state) => state.auth);
-    const [mounted, setMounted] = useState(false);
+    const [mounted, setMounted] = useState(false); // 标记组件是否已挂载，是不是已经到了客户端环境
 
     const path = router.pathname;
 
@@ -25,24 +25,25 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
         }
     }, [path, user, status, router, dispatch]);
 
-    // During SSR and first hydration pass, always render children or a consistent placeholder.
-    // To avoid hydration mismatch, we wait until the component is mounted on the client.
+
+    // 组件还没挂载完成时，返回隐藏的容器，避免 hydration 不匹配
     if (!mounted) {
         return <div style={{ visibility: 'hidden' }}>{children}</div>;
     }
 
+    // 检查浏览器中是否存在 token
     const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
 
-    // If we're authenticated or on a public path, show content
+    // 如果已经登录或者当前页面是公共页面，就直接渲染子组件
     if (user || PUBLIC_PATHS.includes(path)) {
         return <>{children}</>;
     }
 
-    // If we have a token but user info isn't loaded yet, show spinner
+    // 如果有 token 但用户信息还没加载，就显示加载中
     if (hasToken && !user) {
         if (status === 'failed') {
-            // If it failed, maybe the token is invalid or server is down.
-            // For now, let's just show an error or redirect if not on public path.
+            // 如果失败了，可能是 token 无效或服务器宕机。
+            // 目前，我们只显示错误或重定向到公共路径。
             if (!PUBLIC_PATHS.includes(path)) {
                 return (
                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
@@ -62,7 +63,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
         );
     }
 
-    // Default to children if no redirect happened yet (e.g., initial flash prevention)
+    // 默认渲染子组件，如果没有发生重定向（例如，防止初始闪烁）
     return <>{children}</>;
 };
 

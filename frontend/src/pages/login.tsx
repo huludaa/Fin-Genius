@@ -91,7 +91,7 @@ const Login = () => {
                             type="primary"
                             htmlType="submit"
                             loading={loading}
-                            block
+                            block // 按钮宽度占满父容器
                             style={{
                                 height: '50px',
                                 borderRadius: '12px',
