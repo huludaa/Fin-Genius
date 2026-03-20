@@ -112,6 +112,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 Modal.confirm({
                     title: '删除对话',
                     content: '您确定要删除这段对话吗？',
+                    okButtonProps: { style: { backgroundColor: '#67aa95ff', borderColor: '#67aa95ff' } },
                     onOk: async () => {
                         try {
                             await dispatch(deleteConversation(conv.id)).unwrap();
