@@ -7,7 +7,7 @@ export default function Home() {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            router.push('/chat');
+            router.push('/home');
         } else {
             router.push('/login');
         }

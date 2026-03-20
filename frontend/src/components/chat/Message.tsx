@@ -51,7 +51,7 @@ const Message: React.FC<MessageProps> = ({ id, role, content, isStarred, complia
             <Avatar
                 icon={isUser ? <UserOutlined /> : <RobotOutlined />}
                 style={{
-                    backgroundColor: isUser ? '#2563EB' : '#94a3b8',
+                    backgroundColor: isUser ? '#67aa95ff' : '#94a3b8',
                     flexShrink: 0,
                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                 }}
@@ -167,7 +167,7 @@ const Message: React.FC<MessageProps> = ({ id, role, content, isStarred, complia
                 }
                 
                 .message-bubble.user {
-                    background: #2563EB;
+                    background: #67aa95ff;
                     color: #fff;
                     border: none;
                 }
@@ -199,7 +199,7 @@ const Message: React.FC<MessageProps> = ({ id, role, content, isStarred, complia
                     width: 8px;
                     height: 8px;
                     border-radius: 50%;
-                    background-color: #2563EB;
+                    background-color: #67aa95ff;
                     animation: pulse 1.5s infinite ease-in-out;
                 }
                 @keyframes pulse {

@@ -15,6 +15,7 @@ import {
     DeleteOutlined,
     CaretDownOutlined,
     CaretRightOutlined,
+    HomeOutlined
 } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -143,18 +144,21 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     position: 'fixed',
                     height: '100vh',
                     left: 0,
-                    top: 0
+                    top: 0,
+                    background: 'linear-gradient(180deg, #cdfae34f 0%,#cdfae3c8 60%, #8eb1d4c8 100%)',
+
+                    color: '#67aa95ff'
                 }}
             >
                 <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24, gap: 12 }}>
                         <div style={{
-                            width: 32, height: 32, backgroundColor: '#2563EB', borderRadius: 8,
+                            width: 32, height: 32, backgroundColor: '#67aa95ff', borderRadius: 8,
                             display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff'
                         }}>
                             F
                         </div>
-                        {!collapsed && <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff' }}>Fin-Genius</span>}
+                        {!collapsed && <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#67aa95ff' }}>Fin-Genius</span>}
                     </div>
 
                     {(() => {
@@ -171,9 +175,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                                     height: 44,
                                     width: collapsed ? 44 : 'auto',
                                     marginBottom: 20,
-                                    backgroundColor: isNewChatActive ? '#2563EB' : 'transparent',
-                                    borderColor: isNewChatActive ? '#2563EB' : 'rgba(255,255,255,0.15)',
-                                    color: isNewChatActive ? '#fff' : 'rgba(255,255,255,0.65)',
+                                    backgroundColor: isNewChatActive ? '#67aa95ff' : 'transparent',
+                                    borderColor: isNewChatActive ? '#67aa95ff' : 'rgba(136, 136, 136, 0.7)',
+                                    color: isNewChatActive ? '#fff' : 'rgba(136, 136, 136, 0.7)',
                                     borderRadius: 8,
                                     display: 'flex',
                                     alignItems: 'center',
@@ -190,7 +194,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                             theme="dark"
                             selectedKeys={[router.asPath]}
                             mode="inline"
+                            style={{ background: 'transparent', border: 'none' }}
                         >
+                            <Menu.Item key="/home" icon={<HomeOutlined />} onClick={() => router.push('/home')}>
+                                首页
+                            </Menu.Item>
                             <Menu.Item key="/favorites" icon={<StarOutlined />} onClick={() => router.push('/favorites')}>
                                 收藏夹
                             </Menu.Item>
@@ -268,7 +276,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     <Dropdown overlay={userMenu} placement="bottomRight">
                         <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                             <span style={{ marginRight: 8 }}>{user?.username}</span>
-                            <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#2563EB' }} />
+                            <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#67aa95ff' }} />
                         </div>
                     </Dropdown>
                 </Header>
@@ -284,7 +292,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 open={isRenameModalOpen}
                 onOk={submitRename}
                 onCancel={() => setIsRenameModalOpen(false)}
-                okButtonProps={{ style: { backgroundColor: '#2563EB', borderColor: '#2563EB' } }}
+                okButtonProps={{ style: { backgroundColor: '#67aa95ff', borderColor: '#67aa95ff' } }}
             >
                 <Input
                     value={renameValue}
@@ -299,7 +307,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     width: 4px;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: #eee;
+                    background: #fff;
                     border-radius: 4px;
                 }
                 .history-menu-item:hover .history-more-icon {
@@ -310,12 +318,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     transition: opacity 0.2s;
                 }
                 .ant-menu-item-selected {
-                    background-color: #2563EB !important;
+                    background-color: #67aa95ff !important;
                     color: #fff !important;
                 }
-                .ant-menu-dark .ant-menu-item:hover {
-                    color: #fff !important;
+                .ant-menu-dark .ant-menu-item:not(.ant-menu-item-selected) {
+                    color: rgba(136, 136, 136, 0.7) !important;
                 }
+                .ant-menu-dark .ant-menu-item:hover:not(.ant-menu-item-selected) {
+                    color: #888 !important;
+                }    
+
             `}</style>
         </Layout>
     );

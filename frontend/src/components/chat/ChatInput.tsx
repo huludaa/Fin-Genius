@@ -382,7 +382,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                         type="text"
                         shape="circle"
                         disabled={status !== 'streaming' && status !== 'generating' && !prompt.trim() && !activeTemplate && fileList.length === 0}
-                        icon={status === 'streaming' || status === 'generating' ? <StopOutlined style={{ color: '#ff4d4f' }} /> : <SendOutlined style={{ color: '#2563EB', fontSize: '18px' }} />}
+                        icon={status === 'streaming' || status === 'generating' ? <StopOutlined style={{ color: '#ff4d4f' }} /> : <SendOutlined style={{ color: '#67aa95ff', fontSize: '18px' }} />}
                         onClick={() => (status === 'streaming' || status === 'generating' ? handleStop('manual') : handleSend())}
                         style={{ background: '#eef1f4', marginLeft: '8px', width: '36px', height: '36px' }}
                     />
@@ -400,7 +400,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                         height: '52px',
                         padding: '0 24px',
                         fontWeight: 600,
-                        backgroundColor: activeTemplate ? '#2563EB' : '#fff',
+                        backgroundColor: activeTemplate ? '#67aa95ff' : '#fff',
                         color: activeTemplate ? '#fff' : '#0a0a0a',
                         border: '1px solid #eef1f4',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
@@ -452,7 +452,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                                         fontWeight: 500,
                                         fontSize: '14px'
                                     }}
-                                    onMouseOver={(e) => (e.currentTarget.style.borderColor = '#2563EB')}
+                                    onMouseOver={(e) => (e.currentTarget.style.borderColor = '#67aa95ff')}
                                     onMouseOut={(e) => (e.currentTarget.style.borderColor = '#f0f0f0')}
                                 >
                                     {t.template_name}

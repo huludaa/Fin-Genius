@@ -19,8 +19,8 @@ const Login = () => {
             // antd loginUser thunk returns the payload on success or rejects
             const resultAction = await dispatch(loginUser(values));
             if (loginUser.fulfilled.match(resultAction)) {
-                message.success('登录成功，欢迎回来！');
-                router.push('/chat');
+                message.success('登录成功！');
+                router.push('/home');
             } else {
                 const error: any = resultAction.payload;
                 message.error(error?.detail || '登录失败，请检查用户名或密码');
@@ -53,8 +53,8 @@ const Login = () => {
                 bodyStyle={{ padding: '40px' }}
             >
                 <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                    <Title level={2} style={{ margin: 0, fontWeight: 700, color: '#1e293b' }}>Fin-Genius</Title>
-                    <Text type="secondary" style={{ fontSize: '15px' }}>金融营销智能系统</Text>
+                    <Title level={2} style={{ margin: 0, fontWeight: 700, color: '#1e293b' }}>欢迎回来</Title>
+                    <Text type="secondary" style={{ fontSize: '15px' }}>请输入您的账号信息以继续</Text>
                 </div>
 
                 <Form
@@ -97,7 +97,7 @@ const Login = () => {
                                 borderRadius: '12px',
                                 fontSize: '16px',
                                 fontWeight: 600,
-                                background: '#2563EB',
+                                background: '#67aa95ff',
                                 border: 'none',
                                 boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
                             }}
@@ -109,7 +109,7 @@ const Login = () => {
 
                 <div style={{ textAlign: 'center', marginTop: '24px' }}>
                     <Text type="secondary">还没有账号？</Text>
-                    <Link href="/register" style={{ marginLeft: '8px', color: '#2563EB', fontWeight: 600 }}>
+                    <Link href="/register" style={{ marginLeft: '8px', color: '#67aa95ff', fontWeight: 600 }}>
                         立即注册
                     </Link>
                 </div>
@@ -117,12 +117,12 @@ const Login = () => {
 
             <style>{`
                 .ant-btn-primary:hover {
-                    background: #1d4ed8 !important;
+                    background: #508172ff !important;
                     transform: translateY(-1px);
                     transition: all 0.2s;
                 }
                 .ant-input:focus, .ant-input-focused {
-                    border-color: #2563EB !important;
+                    border-color: #67aa95ff !important;
                     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1) !important;
                 }
             `}</style>

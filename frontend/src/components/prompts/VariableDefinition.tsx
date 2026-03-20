@@ -208,7 +208,7 @@ const VariableDefinition: React.FC<VariableDefinitionProps> = ({ variables, onCh
                     block
                     icon={<PlusOutlined />}
                     onClick={addVariable}
-                    style={{ borderRadius: '12px', height: '40px', color: '#2563EB', borderColor: '#2563EB' }}
+                    style={{ borderRadius: '12px', height: '40px', color: '#67aa95ff', borderColor: '#67aa95ff' }}
                 >
                     添加新变量
                 </Button>

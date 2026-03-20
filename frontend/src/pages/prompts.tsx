@@ -92,7 +92,7 @@ const Prompts = () => {
                             type="primary"
                             icon={<PlusOutlined />}
                             onClick={() => setIsModalOpen(true)}
-                            style={{ borderRadius: '8px', height: '40px', padding: '0 20px', backgroundColor: '#2563EB', borderColor: '#2563EB' }}
+                            style={{ borderRadius: '8px', height: '40px', padding: '0 20px', backgroundColor: '#67aa95ff', borderColor: '#67aa95ff' }}
                         >
                             创建新模板
                         </Button>
@@ -147,7 +147,7 @@ const Prompts = () => {
                                             <Button type="text" shape="circle" icon={<EyeOutlined />} onClick={() => handleView(record)} />
                                         </Tooltip>
                                         <Tooltip title="编辑模板">
-                                            <Button type="text" shape="circle" disabled={!canModify} icon={<EditOutlined style={{ color: canModify ? '#2563EB' : undefined }} />} onClick={() => handleEdit(record)} />
+                                            <Button type="text" shape="circle" disabled={!canModify} icon={<EditOutlined style={{ color: canModify ? '#67aa95ff' : undefined }} />} onClick={() => handleEdit(record)} />
                                         </Tooltip>
                                         <Tooltip title="删除模板">
                                             <Button type="text" shape="circle" danger disabled={!canModify} icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />

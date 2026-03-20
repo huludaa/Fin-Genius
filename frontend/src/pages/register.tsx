@@ -55,7 +55,7 @@ const Register = () => {
             >
                 <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                     <Title level={2} style={{ margin: 0, fontWeight: 700, color: '#1e293b' }}>创建账号</Title>
-                    <Text type="secondary" style={{ fontSize: '15px' }}>加入 Fin-Genius 开启智能办公</Text>
+                    <Text type="secondary" style={{ fontSize: '15px' }}>填写以下信息以完成注册</Text>
                 </div>
 
                 <Form
@@ -103,7 +103,7 @@ const Register = () => {
                                 borderRadius: '12px',
                                 fontSize: '16px',
                                 fontWeight: 600,
-                                background: '#2563EB',
+                                background: '#67aa95ff',
                                 border: 'none',
                                 boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
                             }}
@@ -115,7 +115,7 @@ const Register = () => {
 
                 <div style={{ textAlign: 'center', marginTop: '24px' }}>
                     <Text type="secondary">已经有账号？</Text>
-                    <Link href="/login" style={{ marginLeft: '8px', color: '#2563EB', fontWeight: 600 }}>
+                    <Link href="/login" style={{ marginLeft: '8px', color: '#67aa95ff', fontWeight: 600 }}>
                         登录
                     </Link>
                 </div>
@@ -123,12 +123,12 @@ const Register = () => {
 
             <style>{`
                 .ant-btn-primary:hover {
-                    background: #1d4ed8 !important;
+                    background: #508172ff !important;
                     transform: translateY(-1px);
                     transition: all 0.2s;
                 }
                 .ant-input:focus, .ant-input-focused {
-                    border-color: #2563EB !important;
+                    border-color: #67aa95ff !important;
                     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1) !important;
                 }
             `}</style>

@@ -245,7 +245,7 @@ const Chat = () => {
                 textAlign: "center",
               }}
             >
-              <Image
+              {/* <Image
                 src="/images/welcome-pattern.png"
                 alt="Welcome"
                 width={180}
@@ -255,7 +255,13 @@ const Chat = () => {
                   marginBottom: "20px",
                   opacity: 0.8,
                 }}
-              />
+              /> */}
+              <div style={{
+                width: 80, height: 80, backgroundColor: '#67aa95ff', borderRadius: 32,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff'
+              }}>
+                <h1>F</h1>
+              </div>
 
               <p
                 style={{
@@ -264,7 +270,7 @@ const Chat = () => {
                   color: "#64748b",
                 }}
               >
-                金融营销助手已准备就绪
+                模方助手已准备就绪
                 <br />
                 请通过下方输入框开始对话，或从对话历史中选择
               </p>
@@ -380,7 +386,7 @@ const Chat = () => {
             <div style={{ padding: "24px 32px" }}>
               <div
                 style={{
-                  color: "#2563EB",
+                  color: "#67aa95ff",
                   fontSize: "12px",
                   fontWeight: 600,
                   textTransform: "uppercase",

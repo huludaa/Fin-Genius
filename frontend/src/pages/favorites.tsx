@@ -165,9 +165,9 @@ const Favorites = () => {
                                                         {conv?.title || '未知对话'}
                                                     </span>
                                                     {msg.role === 'assistant' ? (
-                                                        <Tag color="#10b981" style={{ border: 'none' }} icon={<RobotOutlined />}>AI 回复</Tag>
+                                                        <Tag color="#94a3b8" style={{ border: 'none' }} icon={<RobotOutlined />}>AI 回复</Tag>
                                                     ) : (
-                                                        <Tag color="#2563EB" style={{ border: 'none' }} icon={<UserOutlined />}>我的提问</Tag>
+                                                        <Tag color="#67aa95ff" style={{ border: 'none' }} icon={<UserOutlined />}>我的提问</Tag>
                                                     )}
                                                 </div>
                                                 <div style={{ color: '#475569', fontSize: '14px', lineHeight: '1.6' }}>
