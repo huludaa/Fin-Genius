@@ -100,6 +100,3 @@
 ## 许可证 📄
 
 [MIT License](LICENSE)
-
----
-**Fin-Genius** - 让金融更智能，让合规更简单。
