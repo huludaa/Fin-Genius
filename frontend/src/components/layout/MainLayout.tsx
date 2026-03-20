@@ -111,7 +111,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <Menu.Item key="delete" icon={<DeleteOutlined />} danger onClick={() => {
                 Modal.confirm({
                     title: '删除对话',
-                    content: '您确定要删除这段对话吗？',
+                    content: `您确定要删除对话 "${conv.title}" 吗？`,
                     okButtonProps: { style: { backgroundColor: '#67aa95ff', borderColor: '#67aa95ff' } },
                     onOk: async () => {
                         try {

@@ -434,30 +434,59 @@ const ChatInput: React.FC<ChatInputProps> = ({ activeTemplate, onTemplateSelect,
                         </div>
 
                         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                            {templates.map(t => (
-                                <div
-                                    key={t.id}
-                                    onClick={() => {
-                                        onTemplateSelect?.(t);
-                                        setIsSelectorOpen(false);
-                                    }}
-                                    style={{
-                                        padding: '16px 20px',
-                                        borderRadius: '12px',
-                                        border: '1px solid #f0f0f0',
-                                        cursor: 'pointer',
-                                        flex: '1 0 45%',
-                                        transition: 'all 0.2s',
-                                        textAlign: 'center',
-                                        fontWeight: 500,
-                                        fontSize: '14px'
-                                    }}
-                                    onMouseOver={(e) => (e.currentTarget.style.borderColor = '#67aa95ff')}
-                                    onMouseOut={(e) => (e.currentTarget.style.borderColor = '#f0f0f0')}
-                                >
-                                    {t.template_name}
-                                </div>
-                            ))}
+                            {templates.map(t => {
+                                const isSelected = activeTemplate?.id === t.id;
+                                return (
+                                    <div
+                                        key={t.id}
+                                        onClick={() => {
+                                            if (isSelected) {
+                                                onTemplateSelect?.(null);
+                                            } else {
+                                                onTemplateSelect?.(t);
+                                            }
+                                            setIsSelectorOpen(false);
+                                        }}
+                                        style={{
+                                            padding: '20px 20px',
+                                            borderRadius: '12px',
+                                            border: `1px solid ${isSelected ? '#67aa95ff' : '#f0f0f0'}`,
+                                            cursor: 'pointer',
+                                            flex: '1 0 45%',
+                                            transition: 'all 0.2s',
+                                            textAlign: 'center',
+                                            fontWeight: 500,
+                                            fontSize: '14px',
+                                            position: 'relative',
+                                            backgroundColor: isSelected ? '#67aa9511' : '#fff',
+                                            color: isSelected ? '#67aa95ff' : 'inherit'
+                                        }}
+                                        onMouseOver={(e) => {
+                                            if (!isSelected) e.currentTarget.style.borderColor = '#67aa95ff';
+                                        }}
+                                        onMouseOut={(e) => {
+                                            if (!isSelected) e.currentTarget.style.borderColor = '#f0f0f0';
+                                        }}
+                                    >
+                                        {/* 官方/自定义标签 */}
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '6px',
+                                            right: '6px',
+                                            fontSize: '10px',
+                                            padding: '2px 6px',
+                                            borderRadius: '2px',
+                                            lineHeight: '1',
+                                            backgroundColor: t.is_official ? 'rgba(103, 170, 149, 0.15)' : 'rgba(100, 116, 139, 0.1)',
+                                            fontWeight: 600,
+                                            border: `1px solid ${t.is_official ? '#67aa9533' : '#64748b22'}`
+                                        }}>
+                                            {t.is_official ? '官方' : '个人'}
+                                        </div>
+                                        {t.template_name}
+                                    </div>
+                                );
+                            })}
                             <div
                                 onClick={() => {
                                     onTemplateSelect?.(null);

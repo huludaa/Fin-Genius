@@ -5,7 +5,8 @@ import {
     LineChartOutlined,
     BulbOutlined,
     RocketOutlined,
-    ArrowRightOutlined
+    ArrowRightOutlined,
+    FileTextOutlined
 } from '@ant-design/icons';
 import MainLayout from '@/components/layout/MainLayout';
 import { useAppSelector } from '@/store/hooks';
@@ -81,7 +82,7 @@ const Home = () => {
                                         <Paragraph style={{ color: '#888', fontSize: '15px', maxWidth: '600px', marginTop: '4px' }}>
                                             这是您的专属全场景 AI 工作空间。我们集成了先进的大语言模型，专注于为您提供高效的场景定制与智能的任务辅助。
                                         </Paragraph>
-                                        <div style={{ marginTop: '12px' }}>
+                                        <div style={{ marginTop: '12px', display: 'flex', gap: '16px' }}>
                                             <Button
                                                 type="primary"
                                                 size="large"
@@ -103,6 +104,27 @@ const Home = () => {
                                             >
                                                 立即开启智能对话
                                             </Button>
+                                            <Button
+                                                size="large"
+                                                icon={<FileTextOutlined />}
+                                                onClick={() => router.push('/prompts')}
+                                                style={{
+                                                    height: '48px',
+                                                    padding: '0 24px',
+                                                    borderRadius: '12px',
+                                                    fontSize: '16px',
+                                                    fontWeight: 600,
+                                                    background: 'rgba(255, 255, 255, 0.5)',
+                                                    border: '1px solid #67aa9544',
+                                                    color: '#67aa95ee',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    transition: 'all 0.3s ease'
+                                                }}
+                                                className="secondary-hero-btn"
+                                            >
+                                                探索提示词模板
+                                            </Button>
                                         </div>
                                     </Space>
                                 </Col>
@@ -123,7 +145,7 @@ const Home = () => {
                         </Card>
                     </Col>
 
-                    <Col span={24} style={{ marginTop: '16px' }}>
+                    {/* <Col span={24} style={{ marginTop: '16px' }}>
                         <Title level={4} style={{ marginBottom: '16px', fontWeight: 700, color: '#1e293b' }}>
                             我们能为您做什么？
                         </Title>
@@ -188,7 +210,7 @@ const Home = () => {
                                 </Col>
                             ))}
                         </Row>
-                    </Col>
+                    </Col> */}
                 </Row>
             </div>
 
@@ -260,6 +282,12 @@ const Home = () => {
                 }
                 :global(.hero-btn:hover .btn-icon) {
                     transform: translateX(4px);
+                }
+                :global(.secondary-hero-btn:hover) {
+                    background: #fff !important;
+                    border-color: #67aa95ff !important;
+                    color: #67aa95ff !important;
+                    box-shadow: 0 4px 12px rgba(103, 170, 149, 0.15) !important;
                 }
                 :global(.btn-icon) {
                     transition: transform 0.3s ease;

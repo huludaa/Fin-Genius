@@ -161,7 +161,7 @@ const Favorites = () => {
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                             <div style={{ flex: 1, minWidth: 0 }}>
                                                 <div style={{ display: 'flex', gap: 12, marginBottom: 8, alignItems: 'center' }}>
-                                                    <span style={{ fontWeight: 600, color: '#1890ff', fontSize: '14px' }}>
+                                                    <span style={{ fontWeight: 600, color: '#67aa95ff', fontSize: '14px' }}>
                                                         {conv?.title || '未知对话'}
                                                     </span>
                                                     {msg.role === 'assistant' ? (
