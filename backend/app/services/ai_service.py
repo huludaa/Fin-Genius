@@ -76,7 +76,12 @@ class AIService:
                 )
                 
                 # 遍历流式输出，chunk是流式输出的块
+                start_time = time.time()
+                is_first_chunk = True
                 async for chunk in stream:
+                    if is_first_chunk:
+                        print(f"DEBUG: First token received after {time.time() - start_time:.2f}s")
+                        is_first_chunk = False
                     # 提取内容,增量模式用的是choices[0].delta.content,而同步模式用的是choices[0].message.content
                     if chunk.choices and chunk.choices[0].delta.content:
                         yield chunk.choices[0].delta.content # 吐字（yield类似return，但它是可以多次返回的，return是一次性返回）
@@ -117,7 +122,8 @@ class AIService:
                     model=settings.AI_MODEL_NAME, 
                     messages=[{"role": "system", "content": "你是一个严谨且专业的 AI 内容合规助手。"},
                              {"role": "user", "content": prompt}],
-                    temperature=0.1
+                    temperature=0.1,
+                    max_tokens=200 # 限制返回长度，加快速度
                 )
                 
                 content = response.choices[0].message.content.strip()

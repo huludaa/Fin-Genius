@@ -1,13 +1,27 @@
 from typing import Any, List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.crud import crud_conversation
 from app.models.user import User
 from app.schemas import conversation as conversation_schemas
 import traceback
+from app.services.ai_service import ai_service
 
 router = APIRouter()
+
+
+# 异步生成标题的后台任务
+async def generate_and_update_title(conversation_id: int, message_content: str):
+    from app.db.session import SessionLocal
+    db = SessionLocal()
+    try:
+        title = await ai_service.generate_title(message_content)
+        crud_conversation.update_conversation_title(db, conversation_id=conversation_id, title=title)
+    except Exception as e:
+        print(f"Background title generation error: {e}")
+    finally:
+        db.close()
 
 
 # 获取会话列表
@@ -58,21 +72,21 @@ async def add_message(
     db: Session = Depends(deps.get_db),
     message_in: conversation_schemas.MessageCreate,
     current_user: User = Depends(deps.get_current_user),
+    background_tasks: BackgroundTasks,
 ) -> Any:
     try:
         conversation = crud_conversation.get_conversation(db, conversation_id=id)
         if not conversation or conversation.user_id != current_user.id: # 检查对话所有权
             raise HTTPException(status_code=404, detail="会话不存在或无权限访问")
         
-        # 如果这是首条用户消息，使用 AI 自动为对话生成标题       
+        # 如果这是首条用户消息，在后台自动为对话生成标题       
         if message_in.role == "user":
             messages = crud_conversation.get_messages_by_conversation(db, conversation_id=id)
             if len(messages) == 0:
-                from app.services.ai_service import ai_service
-                title = await ai_service.generate_title(message_in.content)
-                crud_conversation.update_conversation_title(db, conversation_id=id, title=title)
+                background_tasks.add_task(generate_and_update_title, id, message_in.content)
         
         # 更新对话的最后活跃时间 (updated_at)
+
         crud_conversation.update_conversation(db, conversation_id=id)
         # 添加消息
         return crud_conversation.add_message_to_conversation(db, conversation_id=id, role=message_in.role, content=message_in.content)
