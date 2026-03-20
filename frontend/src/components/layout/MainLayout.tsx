@@ -55,6 +55,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     const handleNewChat = () => {
         dispatch(setCurrentConversationId(null));
         dispatch(clearCurrentMessages());
+        dispatch(clearMessages()); // 确保 UI 界面也被清空
         router.push('/chat');
     };
 

@@ -53,7 +53,7 @@ const Chat = () => {
        * True 的条件：之前没有 ID + 现在有 ID + ID 与 Store 记录一致 + 屏幕上已经有实时消息
        * 核心逻辑原因：当 isJustCreated 为 true 的时，不需要重新加载对话记录，因为消息已经实时显示在屏幕上了
       */
-      const isJustCreated = !prevQueryId.current && parsedQueryId === currentConversationId && messages.length > 0;
+      const isJustCreated = !prevQueryId.current && parsedQueryId !== null && parsedQueryId === currentConversationId && messages.length > 0;
 
       // 如果不是刚新建的（即：用户是从列表点开“旧对话”或者刷新页面）
       if (!isJustCreated) {
