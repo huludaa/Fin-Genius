@@ -123,7 +123,7 @@ class AIService:
                     messages=[{"role": "system", "content": "你是一个严谨且专业的 AI 内容合规助手。"},
                              {"role": "user", "content": prompt}],
                     temperature=0.1,
-                    max_tokens=200 # 限制返回长度，加快速度
+                    max_tokens=1000 # 限制返回长度，加快速度
                 )
                 
                 content = response.choices[0].message.content.strip()
